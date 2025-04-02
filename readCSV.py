@@ -4,6 +4,7 @@ import os
 from dash import Dash, html, dcc, dash_table
 from dash.dependencies import Input, Output
 import plotly.express as px
+import openpyxl
 
 # Initialize the Dash app
 app = Dash()
@@ -58,7 +59,8 @@ app.layout = html.Div([
         ],
         value='TH-E-01 kWh (kWh) [DELTA] 1'  # Default value
     ),
-    html.Div(id='output-container')
+    html.Div(id='output-container'),
+    html.Button('Input data', id='add-XLSX')
 ])
 
 # Callback to update the display based on the selected view type and energy type
