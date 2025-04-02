@@ -60,7 +60,7 @@ app.layout = html.Div([
         value='TH-E-01 kWh (kWh) [DELTA] 1'  # Default value
     ),
     html.Div(id='output-container'),
-    html.Button('Input data', id='add-XLSX')
+    dcc.Upload(id='add-XLSX', children=html.Button("Upload XLSX File", className="button"))
 ])
 
 # Callback to update the display based on the selected view type and energy type
@@ -69,6 +69,7 @@ app.layout = html.Div([
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value')]
 )
+
 def update_output(view_type, selected_energy_type):
     if view_type == 'table':
         return dash_table.DataTable(
