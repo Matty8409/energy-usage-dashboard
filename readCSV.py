@@ -2,8 +2,10 @@ import pandas as pd
 import glob
 import os
 from dash import Dash, html, dcc, dash_table
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.express as px
+import base64
+import io
 import openpyxl
 
 # Initialize the Dash app
@@ -20,7 +22,7 @@ for filename in all_files:
     date_key = os.path.basename(os.path.dirname(filename))
 
     # Read Excel file into a DataFrame
-    df = pd.read_excel(filename)
+    df = pd.read_excel(filename, engine='openpyxl')
 
     # Add a 'Date' column to the DataFrame for easy reference
     df['Date'] = date_key
@@ -67,10 +69,28 @@ app.layout = html.Div([
 @app.callback(
     Output('output-container', 'children'),
     [Input('view-type-radio', 'value'),
-     Input('energy-type-dropdown', 'value')]
+     Input('energy-type-dropdown', 'value'),
+     Input('add-XLSX', 'contents')],
+    [State('add-XLSX', 'filename')]
 )
 
-def update_output(view_type, selected_energy_type):
+
+def update_output(view_type, selected_energy_type, contents, filename):
+    global df_combined
+    if contents is not None:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
+
+        # WORK HERE!!!!! to get button to work well
+
+
+        date_key = os.path.basename(os.path.dirname(filename))
+        df_new['Date'] = date_key
+        df_combined = pd.concat([df_combined, df_new], ignore_index=True)
+        df_combined = df_combined.sort_values(by=['Date', 'Time'])
+        df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
+
     if view_type == 'table':
         return dash_table.DataTable(
             data=df_combined.to_dict('records'),  # Convert the DataFrame to a dictionary for Dash
