@@ -8,10 +8,9 @@ import base64
 import io
 import openpyxl
 
-# Initialize the Dash app
 app = Dash()
 
-# Path to your CSV files
+# Path to CSV files
 path = 'CSV_files'
 all_files = glob.glob(os.path.join(path, '**', '*.xlsx'), recursive=True)
 
@@ -19,7 +18,7 @@ all_files = glob.glob(os.path.join(path, '**', '*.xlsx'), recursive=True)
 combined_data = []
 for filename in all_files:
     # Extract date from the file's directory
-    date_key = os.path.basename(os.path.dirname(filename))
+    date_key = os.path.basename(filename).split('_')[0]
 
     # Read Excel file into a DataFrame
     df = pd.read_excel(filename, engine='openpyxl')
@@ -62,69 +61,55 @@ app.layout = html.Div([
         value='TH-E-01 kWh (kWh) [DELTA] 1'  # Default value
     ),
     html.Div(id='output-container'),
+    dcc.Dropdown(id='date-dropdown'),
     dcc.Upload(id='add-XLSX', children=html.Button("Upload XLSX File", className="button"))
 ])
 
 # Callback to update the display based on the selected view type and energy type
 @app.callback(
-    Output('output-container', 'children'),
+    [Output('output-container', 'children'),
+     Output('date-dropdown', 'options'),
+     Output('date-dropdown', 'value')],
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
-     Input('add-XLSX', 'contents')],
+     Input('add-XLSX', 'contents'),
+     Input('date-dropdown', 'value')],
     [State('add-XLSX', 'filename')]
 )
-
-
-def update_output(view_type, selected_energy_type, contents, filename):
+def update_output(view_type, selected_energy_type, contents, selected_date, filename):
     global df_combined
     if contents is not None:
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
         df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
 
-        # WORK HERE!!!!! to get button to work well
-
-
-        date_key = os.path.basename(os.path.dirname(filename))
+        date_key = os.path.basename(filename).split('_')[0]
         df_new['Date'] = date_key
+
         df_combined = pd.concat([df_combined, df_new], ignore_index=True)
         df_combined = df_combined.sort_values(by=['Date', 'Time'])
         df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
 
-    if view_type == 'table':
-        return dash_table.DataTable(
-            data=df_combined.to_dict('records'),  # Convert the DataFrame to a dictionary for Dash
-            columns=[{"name": i, "id": i} for i in df_combined.columns],
-            page_size=50,  # Number of rows per page
-            style_table={'height': '300px', 'overflowY': 'auto'},  # Table with scroll
-            style_cell={'textAlign': 'center'}  # Center-align text in the cells
-        )
-    elif view_type == 'graph':
-        fig = px.line(df_combined, x='Time', y=selected_energy_type, color='Date', title=f'Energy Usage Over Time: {selected_energy_type}')
-        fig.update_traces(mode='lines+markers')  # Ensure lines and markers are visible
-        return dcc.Graph(figure=fig)
+    date_options = [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
+    if selected_date is None and date_options:
+        selected_date = date_options[0]['value']
 
-# Run the app
+    df_filtered = df_combined[df_combined['Date'] == selected_date]
+
+    if view_type == 'table':
+        return (dash_table.DataTable(
+                    data=df_filtered.to_dict('records'),
+                    columns=[{"name": i, "id": i} for i in df_filtered.columns],
+                    page_size=len(df_filtered),
+                    style_table={'height': '600px', 'overflowY': 'auto'},
+                    style_cell={'textAlign': 'center'}
+                ),
+                date_options,
+                selected_date)
+    elif view_type == 'graph':
+        fig = px.line(df_filtered, x='Time', y=selected_energy_type, color='Date', title=f'Energy Usage Over Time: {selected_energy_type}')
+        fig.update_traces(mode='lines+markers')
+        return dcc.Graph(figure=fig), date_options, selected_date
+
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-# Example: Accessing data for a specific date
-date_to_access = '2025-03-21'
-# Filter the DataFrame by the specific date
-df_filtered = df_combined[df_combined['Date'] == date_to_access]
-# Print the filtered data (optional, for verification)
-if not df_filtered.empty:
-    print(f"Data for {date_to_access}:")
-    print(df_filtered.head)  # Display the first 5 rows for verification
-else:
-    print(f"No data found for {date_to_access}")
