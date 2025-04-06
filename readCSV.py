@@ -1,44 +1,31 @@
+# readCSV.py
 import pandas as pd
-import glob
-import os
-from dash import Dash, html, dcc, dash_table
+from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 import plotly.express as px
-import base64
-import io
-import openpyxl
+from dataProcessing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 
 app = Dash()
 
-# Path to CSV files
-path = 'CSV_files'
-all_files = glob.glob(os.path.join(path, '**', '*.xlsx'), recursive=True)
+# Load initial CSV data
+initial_df = load_initial_csv_data()
 
-# Combine data directly into a single DataFrame
-combined_data = []
-for filename in all_files:
-    # Extract date from the file's directory
-    date_key = os.path.basename(filename).split('_')[0]
+pulse_ratios = {
+    'TH-E-01 kWh (kWh) [DELTA] 1': 1,
+    'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1': 0.1,
+    'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1': 0.001,
+    'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1': 0.001
+}
 
-    # Read Excel file into a DataFrame
-    df = pd.read_excel(filename, engine='openpyxl')
+initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
-    # Add a 'Date' column to the DataFrame for easy reference
-    df['Date'] = date_key
+energy_meter_options = [
+    {'label': 'TH-E-01 kWh (kWh) [DELTA] 1', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
+    {'label': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
+    {'label': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
+    {'label': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
+]
 
-    # Append the DataFrame to the list
-    combined_data.append(df)
-
-# Concatenate all DataFrames into one
-df_combined = pd.concat(combined_data, ignore_index=True)
-
-# Sort the DataFrame by 'Date' and 'Time' columns
-df_combined = df_combined.sort_values(by=['Date', 'Time'])
-
-# Group by 'Date' and 'Time' and aggregate the data
-df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
-
-# Initialize the app layout
 app.layout = html.Div([
     html.H1('Energy Usage Dashboard'),
     dcc.RadioItems(
@@ -47,49 +34,46 @@ app.layout = html.Div([
             {'label': 'Table View', 'value': 'table'},
             {'label': 'Line Graph View', 'value': 'graph'}
         ],
-        value='table',  # Default value
+        value='table',
         labelStyle={'display': 'inline-block'}
     ),
     dcc.Dropdown(
         id='energy-type-dropdown',
-        options=[
-            {'label': 'TH-E-01 kWh (kWh) [DELTA] 1', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
-            {'label': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
-            {'label': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
-            {'label': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
-        ],
-        value='TH-E-01 kWh (kWh) [DELTA] 1'  # Default value
+        options=energy_meter_options,
+        value='TH-E-01 kWh (kWh) [DELTA] 1'
     ),
     html.Div(id='output-container'),
     dcc.Dropdown(id='date-dropdown'),
-    dcc.Upload(id='add-XLSX', children=html.Button("Upload XLSX File", className="button"))
+    dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button")),
+    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
 ])
 
-# Callback to update the display based on the selected view type and energy type
+@app.callback(
+    Output('data-store', 'data'),
+    [Input('add-file', 'contents')],
+    [State('add-file', 'filename'),
+     State('data-store', 'data')]
+)
+def upload_file_or_zip(contents, filename, data):
+    if contents is not None:
+        return process_uploaded_file(contents, filename, data)
+    return dash.no_update
+
 @app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
      Output('date-dropdown', 'value')],
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
-     Input('add-XLSX', 'contents'),
-     Input('date-dropdown', 'value')],
-    [State('add-XLSX', 'filename')]
+     Input('date-dropdown', 'value'),
+     Input('data-store', 'data')]
 )
-def update_output(view_type, selected_energy_type, contents, selected_date, filename):
-    global df_combined
-    if contents is not None:
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
 
-        date_key = os.path.basename(filename).split('_')[0]
-        df_new['Date'] = date_key
+def update_output(view_type, selected_energy_type, selected_date, data):
+    if data is None:
+        return dash.no_update, dash.no_update, dash.no_update
 
-        df_combined = pd.concat([df_combined, df_new], ignore_index=True)
-        df_combined = df_combined.sort_values(by=['Date', 'Time'])
-        df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
-
+    df_combined = pd.DataFrame(data)
     date_options = [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
     if selected_date is None and date_options:
         selected_date = date_options[0]['value']
