@@ -6,6 +6,8 @@ import base64
 import io
 import zipfile
 import openpyxl
+from config import pulse_ratios
+
 
 def process_uploaded_file(contents, filename, existing_data):
     content_type, content_string = contents.split(',')
@@ -21,6 +23,7 @@ def process_uploaded_file(contents, filename, existing_data):
                         df_new = pd.read_excel(f, engine='openpyxl')
                         date_key = os.path.basename(file).split('_')[0]
                         df_new['Date'] = date_key
+                        df_new = apply_pulse_ratios(df_new, pulse_ratios)
                         df_list.append(df_new)
             if existing_data is None:
                 df_combined = pd.concat(df_list, ignore_index=True)

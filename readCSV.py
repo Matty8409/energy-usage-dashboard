@@ -3,30 +3,16 @@ import pandas as pd
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+from config import pulse_ratios, energy_meter_options
 from dataProcessing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 
 app = Dash()
 
-# Load initial CSV data
+# Load initial CSV data and apply pulse ratios
 initial_df = load_initial_csv_data()
-
-pulse_ratios = {
-    'TH-E-01 kWh (kWh) [DELTA] 1': 1,
-    'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1': 0.1,
-    'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1': 0.001,
-    'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1': 0.001
-}
-
 initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
-energy_meter_options = [
-    {'label': 'TH-E-01 kWh (kWh) [DELTA] 1', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
-    {'label': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
-    {'label': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
-    {'label': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
-]
-
-app.layout = html.Div([
+app.layout = html.Div(id='theme-wrapper', children=[
     html.H1('Energy Usage Dashboard'),
     dcc.RadioItems(
         id='view-type-radio',
@@ -45,8 +31,31 @@ app.layout = html.Div([
     html.Div(id='output-container'),
     dcc.Dropdown(id='date-dropdown'),
     dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button")),
-    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
+    dcc.Store(id='data-store', data=initial_df.to_dict('records')),
+    dcc.RadioItems(
+        id='theme-toggle',
+        options=[
+            {'label': '🌞 Light Mode', 'value': 'light'},
+            {'label': '🌙 Dark Mode', 'value': 'dark'}
+        ],
+        value='light',
+        labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
+        style={'margin-bottom': '20px'}
+    ),
+    dcc.Store(id='theme-store', storage_type='session')
 ])
+@app.callback(
+    Output('theme-store', 'data'),
+    Input('theme-toggle', 'value')
+)
+def store_theme_preference(selected_theme):
+    return selected_theme
+@app.callback(
+    Output('theme-wrapper', 'className'),
+    Input('theme-store', 'data')
+)
+def update_theme_class(theme):
+    return f'{theme}-mode'
 
 @app.callback(
     Output('data-store', 'data'),
@@ -66,10 +75,10 @@ def upload_file_or_zip(contents, filename, data):
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
      Input('date-dropdown', 'value'),
-     Input('data-store', 'data')]
+     Input('data-store', 'data'),
+     Input('theme-store', 'data')],
 )
-
-def update_output(view_type, selected_energy_type, selected_date, data):
+def update_output(view_type, selected_energy_type, selected_date, data, theme):
     if data is None:
         return dash.no_update, dash.no_update, dash.no_update
 
@@ -81,13 +90,27 @@ def update_output(view_type, selected_energy_type, selected_date, data):
     df_filtered = df_combined[df_combined['Date'] == selected_date]
 
     if view_type == 'table':
+        table_styles = {
+            'light': {
+                'style_header': {'backgroundColor': '#f0f0f0', 'color': '#000'},
+                'style_cell': {'backgroundColor': '#ffffff', 'color': '#000', 'textAlign': 'center'},
+                'style_table': {'height': '600px', 'overflowY': 'auto'},
+            },
+            'dark': {
+                'style_header': {'backgroundColor': '#1e1e1e', 'color': '#e0e0e0'},
+                'style_cell': {'backgroundColor': '#121212', 'color': '#e0e0e0', 'textAlign': 'center'},
+                'style_table': {'height': '600px', 'overflowY': 'auto'},
+            }
+        }
+
+        styles = table_styles.get(theme, table_styles['light'])
+
         return (dash_table.DataTable(
-                    data=df_filtered.to_dict('records'),
-                    columns=[{"name": i, "id": i} for i in df_filtered.columns],
-                    page_size=len(df_filtered),
-                    style_table={'height': '600px', 'overflowY': 'auto'},
-                    style_cell={'textAlign': 'center'}
-                ),
+            data=df_filtered.to_dict('records'),
+            columns=[{"name": i, "id": i} for i in df_filtered.columns],
+            page_size=len(df_filtered),
+            **styles
+        ),
                 date_options,
                 selected_date)
     elif view_type == 'graph':
