@@ -1,4 +1,4 @@
-# readCSV.py
+# app.py
 import pandas as pd
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
@@ -44,18 +44,23 @@ app.layout = html.Div(id='theme-wrapper', children=[
     ),
     dcc.Store(id='theme-store', storage_type='session')
 ])
+
 @app.callback(
     Output('theme-store', 'data'),
     Input('theme-toggle', 'value')
 )
 def store_theme_preference(selected_theme):
     return selected_theme
+
 @app.callback(
     Output('theme-wrapper', 'className'),
     Input('theme-store', 'data')
 )
 def update_theme_class(theme):
-    return f'{theme}-mode'
+    # Dynamically update the theme for the entire page
+    if theme == 'dark':
+        return f'{theme}-mode'
+    return 'light-mode'
 
 @app.callback(
     Output('data-store', 'data'),

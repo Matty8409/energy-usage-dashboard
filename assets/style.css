@@ -5,18 +5,17 @@ body {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
-/* Full Background for the App in Dark Mode */
+
+/* Dark Mode */
 .dark-mode {
-    background-color: #121212 !important;  /* Set dark mode background color */
-    color: #cfcfcf; /* Adjust text color */
-    min-height: 100vh; /* Ensure the app stretches fully */
+    background-color: #121212 !important; /* Dark background */
+    color: #cfcfcf !important; /* Light text */
 }
 
-/* Full Background for the App in Light Mode */
+/* Light Mode */
 .light-mode {
-    background-color: #f5f5f5 !important;  /* Set light mode background color */
-    color: #333;
-    min-height: 100vh;
+    background-color: #f5f5f5 !important; /* Light background */
+    color: #333 !important; /* Dark text */
 }
 
 .light-mode .dash-button {
@@ -103,4 +102,13 @@ body {
 .light-mode .RadioItem input {
     background-color: #ffffff !important;
     color: #333 !important;
+}
+
+/* Ensure the entire page respects dark mode */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: inherit; /* Inherit background color from the theme */
+    color: inherit; /* Inherit text color from the theme */
 }
