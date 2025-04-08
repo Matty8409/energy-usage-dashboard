@@ -4,7 +4,7 @@ from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 from config import pulse_ratios, energy_meter_options
-from dataProcessing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
+from data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 
 app = Dash()
 

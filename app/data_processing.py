@@ -1,4 +1,4 @@
-# dataProcessing.py
+# data_processing.py
 import glob
 import os
 import pandas as pd
@@ -6,7 +6,7 @@ import base64
 import io
 import zipfile
 import openpyxl
-from config import pulse_ratios
+from .config import pulse_ratios
 
 UPLOAD_FOLDER = r'C:\Users\mattm\Documents\GitHub\finalProjectTesting\CSV_files'  # Directory to save uploaded files
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -71,6 +71,10 @@ def load_initial_csv_data(path=r'C:\Users\mattm\Documents\GitHub\finalProjectTes
         df = pd.read_excel(filename, engine='openpyxl')
         df['Date'] = date_key
         combined_data.append(df)
+
+    if not combined_data:  # Return an empty DataFrame if no files are found
+        return pd.DataFrame()
+
     df_combined = pd.concat(combined_data, ignore_index=True)
     df_combined = df_combined.sort_values(by=['Date', 'Time'])
     df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
