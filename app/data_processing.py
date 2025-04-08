@@ -6,12 +6,12 @@ import base64
 import io
 import zipfile
 import openpyxl
-from .config import pulse_ratios
 
 UPLOAD_FOLDER = r'C:\Users\mattm\Documents\GitHub\finalProjectTesting\CSV_files'  # Directory to save uploaded files
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def process_uploaded_file(contents, filename, existing_data):
+    from app.config import pulse_ratios
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
 

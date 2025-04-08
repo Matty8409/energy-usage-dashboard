@@ -5,6 +5,10 @@ body {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
+.button {
+    margin-top: auto; /* Push the button to the bottom */
+    align-self: center; /* Center the button horizontally */
+}
 
 /* Dark Mode */
 .dark-mode {
@@ -105,10 +109,18 @@ body {
 }
 
 /* Ensure the entire page respects dark mode */
-html, body {
+html, body, #_dash-app-content, #theme-wrapper {
+    height: 100%; /* Make the app take the full height of the viewport */
     margin: 0;
     padding: 0;
-    height: 100%;
-    background-color: inherit; /* Inherit background color from the theme */
-    color: inherit; /* Inherit text color from the theme */
+    display: flex;
+    flex-direction: column;
+}
+
+#theme-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Space out elements evenly */
+    align-items: center;
+    padding: 10px;
 }

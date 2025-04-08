@@ -5,8 +5,12 @@ from dash.dependencies import Input, Output, State
 import plotly.express as px
 from config import pulse_ratios, energy_meter_options
 from data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
+import dash_bootstrap_components as dbc
 
-app = Dash()
+LIGHT_THEME = dbc.themes.JOURNAL
+DARK_THEME = dbc.themes.CYBORG
+
+app = dash.Dash(external_stylesheets=[LIGHT_THEME])
 
 # Load initial CSV data and apply pulse ratios
 initial_df = load_initial_csv_data()
