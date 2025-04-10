@@ -39,8 +39,8 @@ app.layout = html.Div(id='theme-wrapper', children=[
     dcc.RadioItems(
         id='theme-toggle',
         options=[
-            {'label': '🌞 Light Mode', 'value': 'light'},
-            {'label': '🌙 Dark Mode', 'value': 'dark'}
+            {'label': 'Light Mode', 'value': 'light'},
+            {'label': 'Dark Mode', 'value': 'dark'}
         ],
         value='light',
         labelStyle={'display': 'inline-block', 'margin-right': '1rem'},

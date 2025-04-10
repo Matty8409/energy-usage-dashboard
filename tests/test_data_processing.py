@@ -121,17 +121,60 @@ def test_process_uploaded_file_invalid_file(tmpdir):
         with pytest.raises(ValueError, match="Only ZIP files are supported for this operation."):
             process_uploaded_file(contents, filename, None)
 
-# Test for load_initial_csv_data with an empty directory
-def test_load_initial_csv_data_empty_directory(tmpdir):
-    # Ensure the temporary directory is empty
-    assert len(os.listdir(tmpdir)) == 0
+def test_process_uploaded_file_multiple_excel_files(tmpdir):
+    zip_path = tmpdir.join("test.zip")
+    excel_path1 = tmpdir.join("test1.xlsx")
+    excel_path2 = tmpdir.join("test2.xlsx")
+    df1 = pd.DataFrame({'A': [1, 2], 'B': [3, 4], 'Time': ['12:00', '13:00']})
+    df2 = pd.DataFrame({'A': [5, 6], 'B': [7, 8], 'Time': ['14:00', '15:00']})
+    df1.to_excel(excel_path1, index=False, engine='openpyxl')
+    df2.to_excel(excel_path2, index=False, engine='openpyxl')
 
-    # Mock the UPLOAD_FOLDER to use the temporary directory
+    with zipfile.ZipFile(zip_path, 'w') as z:
+        z.write(excel_path1, arcname="test1.xlsx")
+        z.write(excel_path2, arcname="test2.xlsx")
+
+    with open(zip_path, 'rb') as f:
+        encoded_zip = base64.b64encode(f.read()).decode('utf-8')
+
     with patch('app.data_processing.UPLOAD_FOLDER', str(tmpdir)):
-        result = load_initial_csv_data()
+        contents = f"data:application/zip;base64,{encoded_zip}"
+        filename = "uploaded_test.zip"
+        result = process_uploaded_file(contents, filename, None)
 
-    # Assert the result is an empty DataFrame
-    assert result.empty
+    assert isinstance(result, list)
+    assert len(result) > 0
+
+# Test for process_uploaded_file with no Excel files in ZIP
+def test_process_uploaded_file_no_excel_files(tmpdir):
+    zip_path = tmpdir.join("test.zip")
+    text_file = tmpdir.join("test.txt")
+    text_file.write("This is a test file.")
+
+    with zipfile.ZipFile(zip_path, 'w') as z:
+        z.write(text_file, arcname="test.txt")
+
+    with open(zip_path, 'rb') as f:
+        encoded_zip = base64.b64encode(f.read()).decode('utf-8')
+
+    with patch('app.data_processing.UPLOAD_FOLDER', str(tmpdir)):
+        contents = f"data:application/zip;base64,{encoded_zip}"
+        filename = "uploaded_test.zip"
+        with pytest.raises(ValueError, match="Only ZIP files are supported for this operation."):
+            process_uploaded_file(contents, filename, None)
+
+# Test for load_initial_csv_data with multiple Excel files
+def test_load_initial_csv_data_multiple_files(tmpdir):
+    excel_path1 = tmpdir.join("test1.xlsx")
+    excel_path2 = tmpdir.join("test2.xlsx")
+    df1 = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    df2 = pd.DataFrame({'A': [5, 6], 'B': [7, 8]})
+    df1.to_excel(excel_path1, index=False, engine='openpyxl')
+    df2.to_excel(excel_path2, index=False, engine='openpyxl')
+
+    result = load_initial_csv_data(path=str(tmpdir))
+    assert not result.empty
+    assert len(result) == 4
 
 # Test for load_initial_csv_data with multiple files
 def test_load_initial_csv_data_empty_directory(tmpdir):
