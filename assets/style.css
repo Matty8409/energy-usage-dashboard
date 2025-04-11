@@ -1,6 +1,15 @@
 #_dash-app-content {
     background-color: inherit !important;
 }
+
+.header-title {
+    text-align: center;
+    font-family: 'Arial, sans-serif' !important;
+    font-size: 36px !important;
+    font-weight: bold !important;
+    margin-bottom: 20px !important;
+}
+
 body {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }

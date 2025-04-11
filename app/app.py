@@ -1,23 +1,23 @@
 # app.py
+import os
 import pandas as pd
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 from config import pulse_ratios, energy_meter_options
 from data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
-import dash_bootstrap_components as dbc
 
-LIGHT_THEME = dbc.themes.JOURNAL
-DARK_THEME = dbc.themes.CYBORG
-
-app = dash.Dash(external_stylesheets=[LIGHT_THEME])
+app = Dash(
+    __name__,
+    assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
+)
 
 # Load initial CSV data and apply pulse ratios
 initial_df = load_initial_csv_data()
 initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
 app.layout = html.Div(id='theme-wrapper', children=[
-    html.H1('Energy Usage Dashboard'),
+    html.H1('Energy Usage Dashboard', className='header-title'),
     dcc.RadioItems(
         id='view-type-radio',
         options=[
@@ -87,7 +87,8 @@ def upload_files_or_zips(contents_list, filenames, data):
 @app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
-     Output('date-dropdown', 'value')],
+     Output('date-dropdown', 'value'),
+     Output('energy-type-dropdown', 'value')],
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
      Input('date-dropdown', 'value'),
@@ -96,14 +97,14 @@ def upload_files_or_zips(contents_list, filenames, data):
 )
 def update_output(view_type, selected_energy_type, selected_date, data, theme):
     if data is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Convert data-store to DataFrame
     df_combined = pd.DataFrame(data)
 
     # Ensure required columns exist
     if 'Date' not in df_combined.columns or 'Time' not in df_combined.columns:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Generate date options
     date_options = [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
@@ -112,6 +113,10 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
 
     # Filter data by selected date
     df_filtered = df_combined[df_combined['Date'] == selected_date]
+
+    # Automatically set energy type to 'all' for graph view
+    if view_type == 'graph' and (selected_energy_type is None or selected_energy_type == ''):
+        selected_energy_type = 'all'
 
     if view_type == 'table':
         # Render table
@@ -122,14 +127,15 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
             style_table={'height': '600px', 'overflowY': 'auto'}
         ),
                 date_options,
-                selected_date)
+                selected_date,
+                selected_energy_type)
 
     elif view_type == 'graph':
         if selected_energy_type == 'all':
             # Plot all energy columns
             energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
             if not energy_columns:
-                return dash.no_update, dash.no_update, dash.no_update
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
             # Melt the DataFrame for Plotly
             df_melted = df_filtered.melt(
@@ -152,7 +158,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         else:
             # Ensure the selected energy column exists
             if selected_energy_type not in df_filtered.columns:
-                return dash.no_update, dash.no_update, dash.no_update
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
             # Render graph for a single energy type
             fig = px.line(
@@ -164,7 +170,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 labels={'Time': 'Time of Day', selected_energy_type: 'Energy Usage'}
             )
 
-        return dcc.Graph(figure=fig), date_options, selected_date
+        return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
 
 if __name__ == '__main__':
     app.run(debug=True)
