@@ -30,11 +30,11 @@ app.layout = html.Div(id='theme-wrapper', children=[
     dcc.Dropdown(
         id='energy-type-dropdown',
         options=energy_meter_options,
-        value='TH-E-01 kWh (kWh) [DELTA] 1'
+        value='Energy (kWh)'
     ),
     html.Div(id='output-container'),
     dcc.Dropdown(id='date-dropdown'),
-    dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button")),
+    dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
     dcc.Store(id='data-store', data=initial_df.to_dict('records')),
     dcc.RadioItems(
         id='theme-toggle',
@@ -66,15 +66,22 @@ def update_theme_class(theme):
         return f'{theme}-mode'
     return 'light-mode'
 
+
 @app.callback(
     Output('data-store', 'data'),
     [Input('add-file', 'contents')],
     [State('add-file', 'filename'),
      State('data-store', 'data')]
 )
-def upload_file_or_zip(contents, filename, data):
-    if contents is not None:
-        return process_uploaded_file(contents, filename, data)
+def upload_files_or_zips(contents_list, filenames, data):
+    if contents_list is not None:
+        for contents, filename in zip(contents_list, filenames):
+            process_uploaded_file(contents, filename, data)
+
+        # Reload the data from the CSV_files directory
+        updated_df = load_initial_csv_data()
+        updated_df = apply_pulse_ratios(updated_df, pulse_ratios)
+        return updated_df.to_dict('records')
     return dash.no_update
 
 @app.callback(
@@ -91,40 +98,51 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
     if data is None:
         return dash.no_update, dash.no_update, dash.no_update
 
+    # Convert data-store to DataFrame
     df_combined = pd.DataFrame(data)
+
+    # Debug: Log the DataFrame structure
+    print("DataFrame structure:", df_combined.head())
+
+    # Ensure required columns exist
+    if 'Date' not in df_combined.columns or 'Time' not in df_combined.columns:
+        print("Missing required columns: 'Date' or 'Time'")
+        return dash.no_update, dash.no_update, dash.no_update
+
+    # Generate date options
     date_options = [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
     if selected_date is None and date_options:
         selected_date = date_options[0]['value']
 
+    # Filter data by selected date
     df_filtered = df_combined[df_combined['Date'] == selected_date]
 
     if view_type == 'table':
-        table_styles = {
-            'light': {
-                'style_header': {'backgroundColor': '#f0f0f0', 'color': '#000'},
-                'style_cell': {'backgroundColor': '#ffffff', 'color': '#000', 'textAlign': 'center'},
-                'style_table': {'height': '600px', 'overflowY': 'auto'},
-            },
-            'dark': {
-                'style_header': {'backgroundColor': '#1e1e1e', 'color': '#e0e0e0'},
-                'style_cell': {'backgroundColor': '#121212', 'color': '#e0e0e0', 'textAlign': 'center'},
-                'style_table': {'height': '600px', 'overflowY': 'auto'},
-            }
-        }
-
-        styles = table_styles.get(theme, table_styles['light'])
-
+        # Render table
         return (dash_table.DataTable(
             data=df_filtered.to_dict('records'),
             columns=[{"name": i, "id": i} for i in df_filtered.columns],
             page_size=len(df_filtered),
-            **styles
+            style_table={'height': '600px', 'overflowY': 'auto'}
         ),
                 date_options,
                 selected_date)
+
     elif view_type == 'graph':
-        fig = px.line(df_filtered, x='Time', y=selected_energy_type, color='Date', title=f'Energy Usage Over Time: {selected_energy_type}')
-        fig.update_traces(mode='lines+markers')
+        # Ensure the selected energy column exists
+        if selected_energy_type not in df_filtered.columns:
+            print(f"Missing energy column: {selected_energy_type}")
+            return dash.no_update, dash.no_update, dash.no_update
+
+        # Render graph
+        fig = px.line(
+            df_filtered,
+            x='Time',
+            y=selected_energy_type,
+            color='Date',
+            title=f'Energy Usage Over Time: {selected_energy_type}',
+            labels={'Time': 'Time of Day', selected_energy_type: 'Energy Usage'}
+        )
         return dcc.Graph(figure=fig), date_options, selected_date
 
 if __name__ == '__main__':
