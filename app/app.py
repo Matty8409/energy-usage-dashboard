@@ -101,12 +101,8 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
     # Convert data-store to DataFrame
     df_combined = pd.DataFrame(data)
 
-    # Debug: Log the DataFrame structure
-    print("DataFrame structure:", df_combined.head())
-
     # Ensure required columns exist
     if 'Date' not in df_combined.columns or 'Time' not in df_combined.columns:
-        print("Missing required columns: 'Date' or 'Time'")
         return dash.no_update, dash.no_update, dash.no_update
 
     # Generate date options
@@ -129,20 +125,45 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 selected_date)
 
     elif view_type == 'graph':
-        # Ensure the selected energy column exists
-        if selected_energy_type not in df_filtered.columns:
-            print(f"Missing energy column: {selected_energy_type}")
-            return dash.no_update, dash.no_update, dash.no_update
+        if selected_energy_type == 'all':
+            # Plot all energy columns
+            energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
+            if not energy_columns:
+                return dash.no_update, dash.no_update, dash.no_update
 
-        # Render graph
-        fig = px.line(
-            df_filtered,
-            x='Time',
-            y=selected_energy_type,
-            color='Date',
-            title=f'Energy Usage Over Time: {selected_energy_type}',
-            labels={'Time': 'Time of Day', selected_energy_type: 'Energy Usage'}
-        )
+            # Melt the DataFrame for Plotly
+            df_melted = df_filtered.melt(
+                id_vars=['Time', 'Date'],
+                value_vars=energy_columns,
+                var_name='Energy Type',
+                value_name='Usage'
+            )
+
+            # Render graph
+            fig = px.line(
+                df_melted,
+                x='Time',
+                y='Usage',
+                color='Energy Type',
+                line_group='Date',
+                title='Energy Usage Over Time (All Types)',
+                labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
+            )
+        else:
+            # Ensure the selected energy column exists
+            if selected_energy_type not in df_filtered.columns:
+                return dash.no_update, dash.no_update, dash.no_update
+
+            # Render graph for a single energy type
+            fig = px.line(
+                df_filtered,
+                x='Time',
+                y=selected_energy_type,
+                color='Date',
+                title=f'Energy Usage Over Time: {selected_energy_type}',
+                labels={'Time': 'Time of Day', selected_energy_type: 'Energy Usage'}
+            )
+
         return dcc.Graph(figure=fig), date_options, selected_date
 
 if __name__ == '__main__':
