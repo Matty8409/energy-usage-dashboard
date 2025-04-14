@@ -1,10 +1,10 @@
 # app.py
 import os
 import pandas as pd
-from Demos.RegCreateKeyTransacted import classname
+import dash_bootstrap_components as dbc
+import plotly.express as px
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
-import plotly.express as px
 from config import pulse_ratios, energy_meter_options
 from data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 
@@ -19,14 +19,34 @@ initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
 app.layout = html.Div(id='theme-wrapper', children=[
     html.H1('Energy Usage Dashboard', className='header-title'),
-    dcc.RadioItems(
-        id='view-type-radio',
-        options=[
-            {'label': 'Table View', 'value': 'table'},
-            {'label': 'Line Graph View', 'value': 'graph'}
-        ],
-        value='table',
-        labelStyle={'display': 'inline-block'}
+    html.Button('Toggle Toolbar', id='toggle-toolbar-button', className='toolbar-button', n_clicks=0),
+    dbc.Collapse(
+        id='toolbar-collapse',
+        is_open=False,  # Initially collapsed
+        children=[
+            html.Div(id='toolbar', className='toolbar', children=[
+                dcc.RadioItems(
+                    id='view-type-radio',
+                    options=[
+                        {'label': 'Table View', 'value': 'table'},
+                        {'label': 'Line Graph View', 'value': 'graph'}
+                    ],
+                    value='table',
+                    labelStyle={'display': 'inline-block'}
+                ),
+                dcc.RadioItems(
+                    id='theme-toggle',
+                    options=[
+                        {'label': 'Light Mode', 'value': 'light'},
+                        {'label': 'Dark Mode', 'value': 'dark'}
+                    ],
+                    value='light',
+                    labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
+                    style={'margin-bottom': '20px'}
+                ),
+                dcc.Store(id='theme-store', storage_type='session')
+            ])
+        ]
     ),
     dcc.Dropdown(
         id='energy-type-dropdown',
@@ -39,18 +59,7 @@ app.layout = html.Div(id='theme-wrapper', children=[
                  className='date-select-dropdown',
                  placeholder='Select a date'),
     dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
-    dcc.Store(id='data-store', data=initial_df.to_dict('records')),
-    dcc.RadioItems(
-        id='theme-toggle',
-        options=[
-            {'label': 'Light Mode', 'value': 'light'},
-            {'label': 'Dark Mode', 'value': 'dark'}
-        ],
-        value='light',
-        labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
-        style={'margin-bottom': '20px'}
-    ),
-    dcc.Store(id='theme-store', storage_type='session')
+    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
 ])
 
 @app.callback(
@@ -175,6 +184,17 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
             )
 
         return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+
+@app.callback(
+    Output('toolbar-collapse', 'is_open'),
+    Input('toggle-toolbar-button', 'n_clicks'),
+    State('toolbar-collapse', 'is_open')
+)
+def toggle_toolbar(n_clicks, is_open):
+    # Ensure the callback works even if the button hasn't been clicked yet
+    if n_clicks is None:
+        return is_open
+    return not is_open
 
 if __name__ == '__main__':
     app.run(debug=True)
