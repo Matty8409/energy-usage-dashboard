@@ -4,7 +4,7 @@
 
 .header-title {
     text-align: center;
-    font-family: 'Arial, sans-serif' !important;
+    font-family: 'Arial, sans-serif';
     font-size: 36px !important;
     font-weight: bold !important;
     margin-bottom: 20px !important;
@@ -12,6 +12,7 @@
 
 body {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    color: #333333
 }
 
 .button {
@@ -75,7 +76,7 @@ body {
 .dark-mode .dash-radio-items .RadioItem {
     background-color: #333 !important;  /* Dark background */
     color: #e0e0e0 !important;         /* Light text */
-    border: 1px solid #555 !important;  /* Dark border */
+    border: 1px solid #555 !important; /* Dark border */
 }
 
 .dark-mode .Select-menu-outer,
@@ -93,7 +94,8 @@ body {
 .dark-mode .Select-placeholder,
 .dark-mode .Select-single-value,
 .dark-mode .RadioItem span {
-    color: #e0e0e0 !important;  /* Ensure the text is visible */
+    color: #cfcfcf !important;  /* Ensure the text is visible */
+    background-color: #3e9eb8;
 }
 
 /* Light Mode Styles for Buttons and Inputs */
@@ -132,4 +134,26 @@ html, body, #_dash-app-content, #theme-wrapper {
     justify-content: space-between; /* Space out elements evenly */
     align-items: center;
     padding: 10px;
+}
+
+.energy-type-dropdown {
+    display: flex;
+    min-width: 160px;
+}
+
+.date-select-dropdown {
+    display: flex;
+    min-width: 160px;
+}
+
+/* Ensure selected value and placeholder text are visible in dark mode */
+.dark-mode .Select-placeholder,
+.dark-mode .Select-single-value {
+    color: #cfcfcf !important; /* Light text color for visibility */
+}
+
+.dark-mode .Select-control {
+    background-color: #333 !important; /* Dark background for dropdown */
+    color: #cfcfcf !important; /* Light text for selected value */
+    border: 1px solid #555 !important; /* Dark border */
 }

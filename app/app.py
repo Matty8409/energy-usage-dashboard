@@ -1,6 +1,7 @@
 # app.py
 import os
 import pandas as pd
+from Demos.RegCreateKeyTransacted import classname
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 import plotly.express as px
@@ -30,10 +31,13 @@ app.layout = html.Div(id='theme-wrapper', children=[
     dcc.Dropdown(
         id='energy-type-dropdown',
         options=energy_meter_options,
-        value='Energy (kWh)'
+        value='all',
+        className='energy-type-dropdown'
     ),
     html.Div(id='output-container'),
-    dcc.Dropdown(id='date-dropdown'),
+    dcc.Dropdown(id='date-dropdown',
+                 className='date-select-dropdown',
+                 placeholder='Select a date'),
     dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
     dcc.Store(id='data-store', data=initial_df.to_dict('records')),
     dcc.RadioItems(
