@@ -156,6 +156,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 logging.error("No numeric columns available for averaging.")
                 return dash.no_update, dash.no_update, dash.no_update, dash.no_update
             df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
+            df_filtered['Date'] = 'Average'
         else:
             df_filtered = df_combined[df_combined['Date'] == selected_date]
     except Exception as e:
@@ -197,16 +198,27 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 value_name='Usage'
             )
 
+
+            # Determine colouring logic
+            if selected_date in ['all', 'average']:
+                color_col = 'Energy Type'  # Show each energy type across all days
+                line_group_col = 'Date' if selected_date == 'all' else None
+            else:
+                color_col = 'Energy Type'  # For single date, show different energy types
+                line_group_col = None
+
             # Create line graph
             fig = px.line(
                 df_melted,
                 x='Time',
                 y='Usage',
-                color='Energy Type' if selected_date in ['all', 'average'] else 'Date',
-                line_group='Date' if selected_date == 'all' else None,
-                title='Energy Usage Over Time',
+                color=color_col,
+                line_group=line_group_col,
+                title=f'Energy Usage on {selected_date}' if selected_date not in ['all',
+                                                                                  'average'] else 'Energy Usage Over Time',
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
             )
+
             return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
         except Exception as e:
             logging.error(f"Error creating graph view: {e}")
