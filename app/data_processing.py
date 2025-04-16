@@ -68,7 +68,7 @@ def process_uploaded_file(contents, filename, existing_data):
         logging.error(f"Error processing file {filename}: {e}")
         raise
 
-def load_initial_csv_data(path=r'C:\Users\mattm\Documents\GitHub\finalProjectTesting\CSV_files'):
+def load_initial_csv_data(path=UPLOAD_FOLDER):
     all_files = glob.glob(os.path.join(path, '**', '*.xlsx'), recursive=True)
     combined_data = []
     for filename in all_files:

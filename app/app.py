@@ -98,6 +98,11 @@ def upload_files_or_zips(contents_list, filenames, data):
     return dash.no_update
 
 
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 @app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
@@ -110,72 +115,102 @@ def upload_files_or_zips(contents_list, filenames, data):
      Input('theme-store', 'data')],
 )
 def update_output(view_type, selected_energy_type, selected_date, data, theme):
+    logging.debug(f"Callback triggered with view_type={view_type}, selected_energy_type={selected_energy_type}, selected_date={selected_date}")
+    logging.debug(f"Data received: {data}")
+
     if not data:
+        logging.error("Data is empty or None.")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Convert data-store to DataFrame
-    df_combined = pd.DataFrame(data)
+    try:
+        df_combined = pd.DataFrame(data)
+    except Exception as e:
+        logging.error(f"Error converting data to DataFrame: {e}")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Ensure required columns exist
     if 'Date' not in df_combined.columns or 'Time' not in df_combined.columns:
+        logging.error("Required columns 'Date' or 'Time' are missing.")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Generate date options
-    date_options = [
-        {'label': 'All Dates', 'value': 'all'},
-        {'label': 'All Dates (Average)', 'value': 'average'}
-    ] + [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
-    if selected_date is None and date_options:
-        selected_date = date_options[0]['value']
+    try:
+        date_options = [
+            {'label': 'All Dates', 'value': 'all'},
+            {'label': 'All Dates (Average)', 'value': 'average'}
+        ] + [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
+        if selected_date is None and date_options:
+            selected_date = date_options[0]['value']
+    except Exception as e:
+        logging.error(f"Error generating date options: {e}")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Filter or aggregate data
-    if selected_date == 'all':
-        df_filtered = df_combined
-    elif selected_date == 'average':
-        numeric_columns = df_combined.select_dtypes(include='number').columns
-        if numeric_columns.empty:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
-    else:
-        df_filtered = df_combined[df_combined['Date'] == selected_date]
+    try:
+        if selected_date == 'all':
+            df_filtered = df_combined
+        elif selected_date == 'average':
+            numeric_columns = df_combined.select_dtypes(include='number').columns
+            if numeric_columns.empty:
+                logging.error("No numeric columns available for averaging.")
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+            df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
+        else:
+            df_filtered = df_combined[df_combined['Date'] == selected_date]
+    except Exception as e:
+        logging.error(f"Error filtering or aggregating data: {e}")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Automatically set energy type to 'all' for graph view
     if view_type == 'graph' and (selected_energy_type is None or selected_energy_type == ''):
         selected_energy_type = 'all'
 
     if view_type == 'table':
-        return (dash_table.DataTable(
-            data=df_filtered.to_dict('records'),
-            columns=[{"name": i, "id": i} for i in df_filtered.columns],
-            page_size=len(df_filtered),
-            style_table={'height': '600px', 'overflowY': 'auto'}
-        ),
-                date_options,
-                selected_date,
-                selected_energy_type)
-
-    elif view_type == 'graph':
-        energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
-        if not energy_columns:
+        try:
+            return (dash_table.DataTable(
+                data=df_filtered.to_dict('records'),
+                columns=[{"name": i, "id": i} for i in df_filtered.columns],
+                page_size=len(df_filtered),
+                style_table={'height': '600px', 'overflowY': 'auto'}
+            ),
+                    date_options,
+                    selected_date,
+                    selected_energy_type)
+        except Exception as e:
+            logging.error(f"Error creating table view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-        df_melted = df_filtered.melt(
-            id_vars=['Time'],
-            value_vars=energy_columns,
-            var_name='Energy Type',
-            value_name='Usage'
-        )
+    elif view_type == 'graph':
+        try:
+            # Filter energy columns
+            energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
+            if not energy_columns:
+                logging.error("No energy columns available for graphing.")
+                return html.Div("No energy data available for graphing."), date_options, selected_date, selected_energy_type
 
-        fig = px.line(
-            df_melted,
-            x='Time',
-            y='Usage',
-            color='Energy Type' if selected_date in ['all', 'average'] else 'Date',
-            line_group='Date' if selected_date == 'all' else None,
-            title='Energy Usage Over Time',
-            labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
-        )
-        return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+            # Melt DataFrame for graphing
+            df_melted = df_filtered.melt(
+                id_vars=['Time', 'Date'],
+                value_vars=energy_columns,
+                var_name='Energy Type',
+                value_name='Usage'
+            )
+
+            # Create line graph
+            fig = px.line(
+                df_melted,
+                x='Time',
+                y='Usage',
+                color='Energy Type' if selected_date in ['all', 'average'] else 'Date',
+                line_group='Date' if selected_date == 'all' else None,
+                title='Energy Usage Over Time',
+                labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
+            )
+            return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+        except Exception as e:
+            logging.error(f"Error creating graph view: {e}")
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 @app.callback(
     Output('toolbar-collapse', 'is_open'),
