@@ -97,6 +97,7 @@ def upload_files_or_zips(contents_list, filenames, data):
         return updated_df.to_dict('records')
     return dash.no_update
 
+
 @app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
@@ -109,7 +110,7 @@ def upload_files_or_zips(contents_list, filenames, data):
      Input('theme-store', 'data')],
 )
 def update_output(view_type, selected_energy_type, selected_date, data, theme):
-    if data is None:
+    if not data:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Convert data-store to DataFrame
@@ -120,19 +121,29 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     # Generate date options
-    date_options = [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
+    date_options = [
+        {'label': 'All Dates', 'value': 'all'},
+        {'label': 'All Dates (Average)', 'value': 'average'}
+    ] + [{'label': date, 'value': date} for date in df_combined['Date'].unique()]
     if selected_date is None and date_options:
         selected_date = date_options[0]['value']
 
-    # Filter data by selected date
-    df_filtered = df_combined[df_combined['Date'] == selected_date]
+    # Filter or aggregate data
+    if selected_date == 'all':
+        df_filtered = df_combined
+    elif selected_date == 'average':
+        numeric_columns = df_combined.select_dtypes(include='number').columns
+        if numeric_columns.empty:
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
+    else:
+        df_filtered = df_combined[df_combined['Date'] == selected_date]
 
     # Automatically set energy type to 'all' for graph view
     if view_type == 'graph' and (selected_energy_type is None or selected_energy_type == ''):
         selected_energy_type = 'all'
 
     if view_type == 'table':
-        # Render table
         return (dash_table.DataTable(
             data=df_filtered.to_dict('records'),
             columns=[{"name": i, "id": i} for i in df_filtered.columns],
@@ -144,45 +155,26 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 selected_energy_type)
 
     elif view_type == 'graph':
-        if selected_energy_type == 'all':
-            # Plot all energy columns
-            energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
-            if not energy_columns:
-                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
+        if not energy_columns:
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-            # Melt the DataFrame for Plotly
-            df_melted = df_filtered.melt(
-                id_vars=['Time', 'Date'],
-                value_vars=energy_columns,
-                var_name='Energy Type',
-                value_name='Usage'
-            )
+        df_melted = df_filtered.melt(
+            id_vars=['Time'],
+            value_vars=energy_columns,
+            var_name='Energy Type',
+            value_name='Usage'
+        )
 
-            # Render graph
-            fig = px.line(
-                df_melted,
-                x='Time',
-                y='Usage',
-                color='Energy Type',
-                line_group='Date',
-                title='Energy Usage Over Time (All Types)',
-                labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
-            )
-        else:
-            # Ensure the selected energy column exists
-            if selected_energy_type not in df_filtered.columns:
-                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-            # Render graph for a single energy type
-            fig = px.line(
-                df_filtered,
-                x='Time',
-                y=selected_energy_type,
-                color='Date',
-                title=f'Energy Usage Over Time: {selected_energy_type}',
-                labels={'Time': 'Time of Day', selected_energy_type: 'Energy Usage'}
-            )
-
+        fig = px.line(
+            df_melted,
+            x='Time',
+            y='Usage',
+            color='Energy Type' if selected_date in ['all', 'average'] else 'Date',
+            line_group='Date' if selected_date == 'all' else None,
+            title='Energy Usage Over Time',
+            labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
+        )
         return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
 
 @app.callback(
@@ -190,6 +182,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
     Input('toggle-toolbar-button', 'n_clicks'),
     State('toolbar-collapse', 'is_open')
 )
+
 def toggle_toolbar(n_clicks, is_open):
     # Ensure the callback works even if the button hasn't been clicked yet
     if n_clicks is None:

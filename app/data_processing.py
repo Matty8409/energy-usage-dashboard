@@ -8,7 +8,9 @@ import zipfile
 import openpyxl
 import logging
 
-UPLOAD_FOLDER = r'C:\Users\mattm\Documents\GitHub\finalProjectTesting\CSV_files'  # Directory to save uploaded files
+# Dynamically construct the path to the CSV_files folder
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # Get the project root directory
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'CSV_files')  # Path to the CSV_files folder
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def process_uploaded_file(contents, filename, existing_data):
