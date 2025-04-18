@@ -216,3 +216,25 @@ html, body, #_dash-app-content, #theme-wrapper {
 .dark-mode .toolbar-dropdown {
     width: 150px;
 }
+
+/* assets/style.css */
+#output-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.dash-table-container {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.dcc-graph {
+    width: 100%;
+    height: 80vh;
+}

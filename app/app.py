@@ -5,11 +5,23 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
-from config import pulse_ratios, energy_meter_options
-from data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
+from flask import Flask
+from app.config import pulse_ratios, energy_meter_options
+from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
+from app.database import init_db
+
+# Create a Flask server instance
+server = Flask(__name__)
+
+server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize the database with the Flask server
+init_db(server)
 
 app = Dash(
     __name__,
+    server=server,
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
 
@@ -115,9 +127,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
      Input('theme-store', 'data')],
 )
 def update_output(view_type, selected_energy_type, selected_date, data, theme):
-    logging.debug(f"Callback triggered with view_type={view_type}, selected_energy_type={selected_energy_type}, selected_date={selected_date}")
-    logging.debug(f"Data received: {data}")
-
     if not data:
         logging.error("Data is empty or None.")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -157,6 +166,9 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 return dash.no_update, dash.no_update, dash.no_update, dash.no_update
             df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
             df_filtered['Date'] = 'Average'
+            # Reorder columns to place 'Date' at the beginning
+            columns_order = ['Date'] + [col for col in df_filtered.columns if col != 'Date']
+            df_filtered = df_filtered[columns_order]
         else:
             df_filtered = df_combined[df_combined['Date'] == selected_date]
     except Exception as e:
