@@ -11,9 +11,14 @@ from app.data_processing import process_uploaded_file, load_initial_csv_data, ap
 from app.database import init_db
 from app.layouts import get_dashboard_layout
 from app.login import get_login_layout, register_login_callbacks
+from app import routes
 
 # Create a Flask server instance
 server = Flask(__name__)
+
+routes.register_routes()
+
+server.config['SECRET_KEY'] = os.urandom(24)
 
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

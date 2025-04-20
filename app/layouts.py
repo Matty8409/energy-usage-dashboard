@@ -1,3 +1,4 @@
+import dash_bootstrap_components as dbc
 from dash import html, dcc
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
@@ -50,7 +51,6 @@ def get_dashboard_layout():
                      className='date-select-dropdown',
                      placeholder='Select a date'),
         dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
-        html.Div(id='page-content', children=get_login_layout())
+        dcc.Store(id='data-store', data=initial_df.to_dict('records'))
     ])
     return dashboard_layout
