@@ -142,6 +142,7 @@ html, body, #_dash-app-content, #theme-wrapper {
     justify-content: space-between; /* Space out elements evenly */
     align-items: center;
     padding: 10px;
+    width: 90%;
 }
 
 .energy-type-dropdown {
@@ -220,16 +221,16 @@ html, body, #_dash-app-content, #theme-wrapper {
 /* assets/style.css */
 #output-container {
     width: 100%;
-    height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .dash-table-container {
     width: 100%;
-    height: auto;
     max-height: 80vh;
     overflow-y: auto;
 }
