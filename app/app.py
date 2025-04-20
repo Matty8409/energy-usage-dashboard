@@ -5,10 +5,12 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
-from flask import Flask
+from flask import Flask, session
 from app.config import pulse_ratios, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
+from app.layouts import get_dashboard_layout
+from app.login import get_login_layout, register_login_callbacks
 
 # Create a Flask server instance
 server = Flask(__name__)
@@ -25,54 +27,9 @@ app = Dash(
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
 
-# Load initial CSV data and apply pulse ratios
-initial_df = load_initial_csv_data()
-initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
+app.layout = get_login_layout()
 
-app.layout = html.Div(id='theme-wrapper', children=[
-    html.H1('Energy Usage Dashboard', className='header-title'),
-    html.Button('Toggle Toolbar', id='toggle-toolbar-button', className='toolbar-button', n_clicks=0),
-    dbc.Collapse(
-        id='toolbar-collapse',
-        is_open=False,  # Initially collapsed
-        children=[
-            html.Div(id='toolbar', className='toolbar', children=[
-                dcc.RadioItems(
-                    id='view-type-radio',
-                    options=[
-                        {'label': 'Table View', 'value': 'table'},
-                        {'label': 'Line Graph View', 'value': 'graph'}
-                    ],
-                    value='table',
-                    labelStyle={'display': 'inline-block'}
-                ),
-                dcc.RadioItems(
-                    id='theme-toggle',
-                    options=[
-                        {'label': 'Light Mode', 'value': 'light'},
-                        {'label': 'Dark Mode', 'value': 'dark'}
-                    ],
-                    value='light',
-                    labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
-                    style={'margin-bottom': '20px'}
-                ),
-                dcc.Store(id='theme-store', storage_type='session')
-            ])
-        ]
-    ),
-    dcc.Dropdown(
-        id='energy-type-dropdown',
-        options=energy_meter_options,
-        value='all',
-        className='energy-type-dropdown'
-    ),
-    html.Div(id='output-container'),
-    dcc.Dropdown(id='date-dropdown',
-                 className='date-select-dropdown',
-                 placeholder='Select a date'),
-    dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
-    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
-])
+register_login_callbacks(app, get_dashboard_layout)
 
 @app.callback(
     Output('theme-store', 'data'),
