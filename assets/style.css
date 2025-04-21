@@ -147,12 +147,12 @@ html, body, #_dash-app-content, #theme-wrapper {
 
 .energy-type-dropdown {
     display: flex;
-    min-width: 160px;
+    min-width: 260px;
 }
 
 .date-select-dropdown {
     display: flex;
-    min-width: 160px;
+    min-width: 260px;
 }
 
 /* Ensure selected value and placeholder text are visible in dark mode */

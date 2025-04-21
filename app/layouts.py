@@ -2,7 +2,6 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
-from app.login import get_login_layout
 
 
 def get_dashboard_layout():
@@ -54,3 +53,23 @@ def get_dashboard_layout():
         dcc.Store(id='data-store', data=initial_df.to_dict('records'))
     ])
     return dashboard_layout
+
+def get_login_layout():
+    return html.Div(id='theme-wrapper', children=[
+        html.H2("Login", style={'textAlign': 'center'}),
+        dcc.Input(id='username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
+        dcc.Input(id='password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
+        html.Button('Login', id='login-button', n_clicks=0),
+        html.Button('Go to Register', id='go-to-register', n_clicks=0, style={'marginTop': '10px'}),
+        html.Div(id='login-message', style={'color': 'red', 'marginTop': '10px'})
+    ])
+
+def get_register_layout():
+    return html.Div(id='theme-wrapper', children=[
+        html.H2("Register", style={'textAlign': 'center'}),
+        dcc.Input(id='register-username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
+        dcc.Input(id='register-password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
+        html.Button('Register', id='register-button', n_clicks=0),
+        html.Button('Go to Login', id='go-to-login', n_clicks=0, style={'marginTop': '10px'}),
+        html.Div(id='register-message', style={'color': 'red', 'marginTop': '10px'})
+    ])

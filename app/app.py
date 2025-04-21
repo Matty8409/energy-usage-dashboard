@@ -9,8 +9,9 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout
-from app.login import get_login_layout, register_login_callbacks
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout
+from app.login import register_login_callbacks
+from app.register import register_register_callbacks
 from app import routes
 
 # Create a Flask server instance
@@ -35,6 +36,19 @@ app = Dash(
 app.layout = get_login_layout()
 
 register_login_callbacks(app, get_dashboard_layout)
+register_register_callbacks(app)
+
+@app.callback(
+    Output('theme-wrapper', 'children'),
+    [Input('go-to-register', 'n_clicks'),
+     Input('go-to-login', 'n_clicks')]
+)
+def navigate_layout(go_to_register, go_to_login):
+    if go_to_register:
+        return get_register_layout()
+    elif go_to_login:
+        return get_login_layout()
+    return get_login_layout()  # Default to login layout
 
 @app.callback(
     Output('theme-store', 'data'),
@@ -71,7 +85,6 @@ def upload_files_or_zips(contents_list, filenames, data):
         return updated_df.to_dict('records')
     return dash.no_update
 
-
 import logging
 
 # Configure logging
@@ -89,6 +102,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
      Input('theme-store', 'data')],
 )
 def update_output(view_type, selected_energy_type, selected_date, data, theme):
+    if not session.get('logged_in'):  # Check if the user is logged in
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
     if not data:
         logging.error("Data is empty or None.")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update

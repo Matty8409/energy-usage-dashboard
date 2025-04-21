@@ -11,8 +11,15 @@ def register_routes():
 
     @server.route('/register', methods=['POST'])
     def register():
-        data = request.json
-        return jsonify(register_user(data['username'], data['password']))
+        data = request.json  # Get JSON data from the request
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+
+        response, status_code = register_user(username, password)
+        return jsonify(response), status_code
 
     @server.route('/login', methods=['POST'])
     def login():
