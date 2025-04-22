@@ -11,7 +11,6 @@ from app.data_processing import process_uploaded_file, load_initial_csv_data, ap
 from app.database import init_db
 from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout
 from app.login import register_login_callbacks
-from app.register import register_register_callbacks
 from app import routes
 
 # Create a Flask server instance
@@ -36,19 +35,7 @@ app = Dash(
 app.layout = get_login_layout()
 
 register_login_callbacks(app, get_dashboard_layout)
-register_register_callbacks(app)
 
-@app.callback(
-    Output('theme-wrapper', 'children'),
-    [Input('go-to-register', 'n_clicks'),
-     Input('go-to-login', 'n_clicks')]
-)
-def navigate_layout(go_to_register, go_to_login):
-    if go_to_register:
-        return get_register_layout()
-    elif go_to_login:
-        return get_login_layout()
-    return get_login_layout()  # Default to login layout
 
 @app.callback(
     Output('theme-store', 'data'),
