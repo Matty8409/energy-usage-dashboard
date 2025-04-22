@@ -142,7 +142,7 @@ html, body, #_dash-app-content, #theme-wrapper {
     justify-content: space-between; /* Space out elements evenly */
     align-items: center;
     padding: 10px;
-    width: 90%;
+    width: 100%;
 }
 
 .energy-type-dropdown {
