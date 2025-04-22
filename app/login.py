@@ -2,11 +2,13 @@ import logging
 from dash import html, Input, Output, State, callback_context
 from flask import session
 from app.auth import login_user, register_user
-from app.layouts import get_login_layout, get_register_layout
+from app.pages.dashboard import get_dashboard_layout
+from app.pages.login import get_login_layout
+from app.pages.register import get_register_layout
 
 logging.basicConfig(level=logging.DEBUG)
 
-def register_login_callbacks(app, get_dashboard_layout):
+def register_login_callbacks(app):
     @app.callback(
         Output('theme-wrapper', 'children'),
         [Input('login-button', 'n_clicks'),

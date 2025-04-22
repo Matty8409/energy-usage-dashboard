@@ -1,20 +1,29 @@
 # app.py
 import os
 import pandas as pd
-import dash_bootstrap_components as dbc
 import plotly.express as px
+import dash
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
-from app.config import pulse_ratios, energy_meter_options
+from app.config import pulse_ratios
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout
-from app.login import register_login_callbacks
 from app import routes
+
 
 # Create a Flask server instance
 server = Flask(__name__)
+
+app = Dash(
+    __name__,
+    server=server,
+    assets_folder=os.path.join(os.path.dirname(__file__), '../assets') # Explicitly point to the assets folder
+)
+
+from app.login import register_login_callbacks
+import app.pages.dashboard
+dash.register_page("dashboard", path="/dashboard")
 
 routes.register_routes()
 
@@ -26,15 +35,17 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize the database with the Flask server
 init_db(server)
 
-app = Dash(
-    __name__,
-    server=server,
-    assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
-)
+app.layout = html.Div([
+    html.H1('Energy App', style={'textAlign': 'center'}),
+    html.Div([
+        dcc.Link("Login", href="/login", style={'margin': '10px'}),
+        dcc.Link("Register", href="/register", style={'margin': '10px'}),
+        dcc.Link("Dashboard", href="/dashboard", style={'margin': '10px'}),
+    ], style={'textAlign': 'center', 'marginBottom': '20px'}),
+    dash.page_container
+])
 
-app.layout = get_login_layout()
-
-register_login_callbacks(app, get_dashboard_layout)
+register_login_callbacks(app)
 
 
 @app.callback(
@@ -120,7 +131,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         logging.error(f"Error generating date options: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    # Filter or aggregate data
+    # Filter or aggregate data by date
     try:
         if selected_date == 'all':
             df_filtered = df_combined
@@ -131,7 +142,6 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 return dash.no_update, dash.no_update, dash.no_update, dash.no_update
             df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
             df_filtered['Date'] = 'Average'
-            # Reorder columns to place 'Date' at the beginning
             columns_order = ['Date'] + [col for col in df_filtered.columns if col != 'Date']
             df_filtered = df_filtered[columns_order]
         else:
@@ -140,10 +150,19 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         logging.error(f"Error filtering or aggregating data: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    # Automatically set energy type to 'all' for graph view
-    if view_type == 'graph' and (selected_energy_type is None or selected_energy_type == ''):
-        selected_energy_type = 'all'
+    # Filter by energy type
+    try:
+        if selected_energy_type and selected_energy_type != 'all':
+            if selected_energy_type in df_filtered.columns:
+                df_filtered = df_filtered[['Date', 'Time', selected_energy_type]]
+            else:
+                logging.error(f"Selected energy type '{selected_energy_type}' not found in columns.")
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    except Exception as e:
+        logging.error(f"Error filtering by energy type: {e}")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
+    # Render table or graph
     if view_type == 'table':
         try:
             return (dash_table.DataTable(
@@ -161,38 +180,20 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
 
     elif view_type == 'graph':
         try:
-            # Filter energy columns
-            energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
-            if not energy_columns:
-                logging.error("No energy columns available for graphing.")
-                return html.Div("No energy data available for graphing."), date_options, selected_date, selected_energy_type
-
             # Melt DataFrame for graphing
             df_melted = df_filtered.melt(
                 id_vars=['Time', 'Date'],
-                value_vars=energy_columns,
+                value_vars=[selected_energy_type] if selected_energy_type != 'all' else df_filtered.columns[2:],
                 var_name='Energy Type',
                 value_name='Usage'
             )
 
-
-            # Determine colouring logic
-            if selected_date in ['all', 'average']:
-                color_col = 'Energy Type'  # Show each energy type across all days
-                line_group_col = 'Date' if selected_date == 'all' else None
-            else:
-                color_col = 'Energy Type'  # For single date, show different energy types
-                line_group_col = None
-
-            # Create line graph
             fig = px.line(
                 df_melted,
                 x='Time',
                 y='Usage',
-                color=color_col,
-                line_group=line_group_col,
-                title=f'Energy Usage on {selected_date}' if selected_date not in ['all',
-                                                                                  'average'] else 'Energy Usage Over Time',
+                color='Energy Type',
+                title=f'Energy Usage on {selected_date}' if selected_date not in ['all', 'average'] else 'Energy Usage Over Time',
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
             )
 
