@@ -1,9 +1,9 @@
-# app.py
+# core.py
 import os
 import pandas as pd
 import plotly.express as px
 import dash
-from dash import Dash, html, dcc, dash_table, dash
+from dash import Dash, html, dcc, dash_table
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
 from app.config import pulse_ratios
@@ -11,18 +11,19 @@ from app.data_processing import process_uploaded_file, load_initial_csv_data, ap
 from app.database import init_db
 from app import routes
 
-
 # Create a Flask server instance
 server = Flask(__name__)
 
-app = Dash(
+dash_app = Dash(
     __name__,
     server=server,
-    assets_folder=os.path.join(os.path.dirname(__file__), '../assets') # Explicitly point to the assets folder
+    assets_folder=os.path.join(os.path.dirname(__file__), '../assets'), # Explicitly point to the assets folder
+    use_pages=True,
+    suppress_callback_exceptions=True
 )
 
 from app.login import register_login_callbacks
-import app.pages.dashboard
+
 dash.register_page("dashboard", path="/dashboard")
 
 routes.register_routes()
@@ -35,27 +36,29 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize the database with the Flask server
 init_db(server)
 
-app.layout = html.Div([
+dash_app.layout = html.Div([
     html.H1('Energy App', style={'textAlign': 'center'}),
+    dcc.Location(id="url"),
     html.Div([
-        dcc.Link("Login", href="/login", style={'margin': '10px'}),
-        dcc.Link("Register", href="/register", style={'margin': '10px'}),
-        dcc.Link("Dashboard", href="/dashboard", style={'margin': '10px'}),
+        dcc.Link("login", href="/login", style={'margin': '10px'}),
+        dcc.Link("register", href="/register", style={'margin': '10px'}),
+        dcc.Link("dashboard", href="/dashboard", style={'margin': '10px'}),
     ], style={'textAlign': 'center', 'marginBottom': '20px'}),
     dash.page_container
 ])
 
-register_login_callbacks(app)
+
+register_login_callbacks(dash_app)
 
 
-@app.callback(
+@dash_app.callback(
     Output('theme-store', 'data'),
     Input('theme-toggle', 'value')
 )
 def store_theme_preference(selected_theme):
     return selected_theme
 
-@app.callback(
+@dash_app.callback(
     Output('theme-wrapper', 'className'),
     Input('theme-store', 'data')
 )
@@ -66,7 +69,7 @@ def update_theme_class(theme):
     return 'light-mode'
 
 
-@app.callback(
+@dash_app.callback(
     Output('data-store', 'data'),
     [Input('add-file', 'contents')],
     [State('add-file', 'filename'),
@@ -88,7 +91,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-@app.callback(
+@dash_app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
      Output('date-dropdown', 'value'),
@@ -202,7 +205,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-@app.callback(
+@dash_app.callback(
     Output('toolbar-collapse', 'is_open'),
     Input('toggle-toolbar-button', 'n_clicks'),
     State('toolbar-collapse', 'is_open')
@@ -215,4 +218,4 @@ def toggle_toolbar(n_clicks, is_open):
     return not is_open
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    dash_app.run(debug=True)

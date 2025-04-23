@@ -1,4 +1,9 @@
-from app.app import app
+from app.core import dash_app
+
+
+print(dash_app)  # See what "app" really is
+
+
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    dash_app.run(debug=True)

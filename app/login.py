@@ -2,14 +2,14 @@ import logging
 from dash import html, Input, Output, State, callback_context
 from flask import session
 from app.auth import login_user, register_user
-from app.pages.dashboard import get_dashboard_layout
+from app.pages.dashboard import layout as dashboard_layout
 from app.pages.login import get_login_layout
 from app.pages.register import get_register_layout
 
 logging.basicConfig(level=logging.DEBUG)
 
-def register_login_callbacks(app):
-    @app.callback(
+def register_login_callbacks(dash_app):
+    @dash_app.callback(
         Output('theme-wrapper', 'children'),
         [Input('login-button', 'n_clicks'),
          Input('register-button', 'n_clicks'),
@@ -30,7 +30,7 @@ def register_login_callbacks(app):
             response, status_code = login_user(username, password)
             if status_code == 200:
                 session['logged_in'] = True
-                return get_dashboard_layout().children
+                return dashboard_layout
             else:
                 return get_login_layout().children + [
                     html.Div(response['error'], style={'color': 'red', 'marginTop': '10px'})

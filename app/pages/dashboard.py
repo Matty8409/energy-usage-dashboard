@@ -4,7 +4,9 @@ from dash import html, dcc
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
 
-dash.register_page(__name__, path="/dashboard")
+dash.register_page("dashboard", path="/dashboard")
+
+print("Hello")
 
 # Load and process initial data
 initial_df = load_initial_csv_data()
@@ -54,6 +56,3 @@ layout = html.Div(id='theme-wrapper', children=[
         dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
         dcc.Store(id='data-store', data=initial_df.to_dict('records'))
     ])
-
-def get_dashboard_layout():
-    return layout

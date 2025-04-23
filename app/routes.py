@@ -3,7 +3,7 @@ from app.auth import register_user, login_user, logout_user
 
 # Use the `server` object dynamically to avoid circular imports
 def get_server():
-    from app.app import server
+    from app.core import server
     return server
 
 def register_routes():

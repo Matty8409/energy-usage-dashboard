@@ -1,5 +1,5 @@
 import pytest
-from app.app import server as app  # Use the existing server instance
+from app.core import server as app  # Use the existing server instance
 from app.database import db
 
 @pytest.fixture

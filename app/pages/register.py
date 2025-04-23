@@ -1,7 +1,7 @@
 import dash
 from dash import html, dcc
 
-dash.register_page(__name__, path="/register")
+dash.register_page("register", path="/register")
 
 layout = html.Div(id='theme-wrapper', children=[
         html.H2("Register", style={'textAlign': 'center'}),

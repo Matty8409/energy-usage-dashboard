@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:sqlite:C:\Users\Matthew\Desktop\Python DEV\energy-usage-dashboard\instance\app.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="app [2]" uuid="abdc3ad5-b056-4533-8abe-f41e1424d9c0">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:C:\Users\mattm\Documents\GitHub\finalProjectTesting\instance\app.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
