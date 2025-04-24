@@ -9,7 +9,7 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout
 from app.login import register_login_callbacks
 from app import routes
 
@@ -34,14 +34,20 @@ app = Dash(
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
 
-
-app.validation_layout = html.Div([
+app.validation_layout = html.Div([  # Ensure that 'url' is part of the validation layout
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content'),
     get_login_layout(),
-    get_dashboard_layout()
+    get_dashboard_layout(),
+    get_register_layout()
 ])
 
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),  # Ensure that 'url' is in the layout
+    html.Div(id='page-content'),
+    html.Div([dcc.Link('Go to Dashboard', href='/dashboard')])
+])
 
-app.layout = get_login_layout()
 
 register_login_callbacks(app, get_dashboard_layout)
 
@@ -62,6 +68,18 @@ def upload_files_or_zips(contents_list, filenames, data):
         updated_df = apply_pulse_ratios(updated_df, pulse_ratios)
         return updated_df.to_dict('records')
     return dash.no_update
+
+
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
+
+def display_page(pathname):
+    if pathname == '/dashboard':
+        return get_dashboard_layout()
+    elif pathname == '/register':
+        return get_register_layout()
+    else:
+        return get_login_layout()  # Default to login if no matching path
 
 
 import logging

@@ -11,12 +11,12 @@ def get_dashboard_layout():
     dashboard_layout = html.Div(id='theme-wrapper', children=[
         dcc.Store(id='saved-views-store', storage_type='local'),
         html.H1('Energy Usage Dashboard', className='header-title'),
+        dcc.Link('Go to Register Page', href='/register'),
         html.Div([
             dcc.Input(id='save-name-input', type='text', placeholder='Enter view name...'),
             html.Button('Save View', id='save-view-button', n_clicks=0)
         ]),
         dcc.Dropdown(id='saved-view-dropdown', placeholder='Load a saved view...'),
-        html.Button('Toggle Toolbar', id='toggle-toolbar-button', className='toolbar-button', n_clicks=0),
         dbc.Collapse(
             id='toolbar-collapse',
             is_open=False,  # Initially collapsed
@@ -74,6 +74,7 @@ def get_login_layout():
 def get_register_layout():
     register_layout = html.Div(id='theme-wrapper', children=[
         html.H2("Register", style={'textAlign': 'center'}),
+        dcc.Link('Go to Dashboard', href='/dashboard'),
         dcc.Input(id='register-username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
         dcc.Input(id='register-password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
         html.Button('Register', id='register-button', n_clicks=0),
