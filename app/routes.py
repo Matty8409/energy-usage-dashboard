@@ -1,18 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 from app.auth import register_user, login_user, logout_user
 
-app = Flask(__name__)
+# Use the `server` object dynamically to avoid circular imports
+def get_server():
+    from app.app import server
+    return server
 
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.json
-    return jsonify(register_user(data['username'], data['password']))
+def register_routes():
+    server = get_server()
 
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    return jsonify(login_user(data['username'], data['password']))
+    @server.route('/register', methods=['POST'])
+    def register():
+        data = request.json
+        return jsonify(register_user(data['username'], data['password']))
 
-@app.route('/logout', methods=['POST'])
-def logout():
-    return jsonify(logout_user())
+    @server.route('/login', methods=['POST'])
+    def login():
+        print("Login route accessed")
+        data = request.json
+        response, status_code = login_user(data['username'], data['password'])
+        return jsonify(response), status_code  # Return the response and status code
+
+    @server.route('/logout', methods=['POST'])
+    def logout():
+        return jsonify(logout_user())

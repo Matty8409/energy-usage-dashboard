@@ -5,13 +5,21 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
-from flask import Flask
+from flask import Flask, session
 from app.config import pulse_ratios, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout
+from app.login import register_login_callbacks
+from app.statistics import register_statistics_callbacks
+from app import routes
 
 # Create a Flask server instance
 server = Flask(__name__)
+
+routes.register_routes()
+
+server.config['SECRET_KEY'] = os.urandom(24)
 
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,72 +33,22 @@ app = Dash(
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
 
-# Load initial CSV data and apply pulse ratios
-initial_df = load_initial_csv_data()
-initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-
-app.layout = html.Div(id='theme-wrapper', children=[
-    html.H1('Energy Usage Dashboard', className='header-title'),
-    html.Button('Toggle Toolbar', id='toggle-toolbar-button', className='toolbar-button', n_clicks=0),
-    dbc.Collapse(
-        id='toolbar-collapse',
-        is_open=False,  # Initially collapsed
-        children=[
-            html.Div(id='toolbar', className='toolbar', children=[
-                dcc.RadioItems(
-                    id='view-type-radio',
-                    options=[
-                        {'label': 'Table View', 'value': 'table'},
-                        {'label': 'Line Graph View', 'value': 'graph'}
-                    ],
-                    value='table',
-                    labelStyle={'display': 'inline-block'}
-                ),
-                dcc.RadioItems(
-                    id='theme-toggle',
-                    options=[
-                        {'label': 'Light Mode', 'value': 'light'},
-                        {'label': 'Dark Mode', 'value': 'dark'}
-                    ],
-                    value='light',
-                    labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
-                    style={'margin-bottom': '20px'}
-                ),
-                dcc.Store(id='theme-store', storage_type='session')
-            ])
-        ]
-    ),
-    dcc.Dropdown(
-        id='energy-type-dropdown',
-        options=energy_meter_options,
-        value='all',
-        className='energy-type-dropdown'
-    ),
-    html.Div(id='output-container'),
-    dcc.Dropdown(id='date-dropdown',
-                 className='date-select-dropdown',
-                 placeholder='Select a date'),
-    dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
-    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
+app.validation_layout = html.Div([  # Ensure that 'url' is part of the validation layout
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content'),
+    get_login_layout(),
+    get_dashboard_layout(),
+    get_register_layout(),
+    get_statistics_layout()
 ])
 
-@app.callback(
-    Output('theme-store', 'data'),
-    Input('theme-toggle', 'value')
-)
-def store_theme_preference(selected_theme):
-    return selected_theme
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),  # Ensure that 'url' is in the layout
+    html.Div(id='page-content')
+])
 
-@app.callback(
-    Output('theme-wrapper', 'className'),
-    Input('theme-store', 'data')
-)
-def update_theme_class(theme):
-    # Dynamically update the theme for the entire page
-    if theme == 'dark':
-        return f'{theme}-mode'
-    return 'light-mode'
-
+register_login_callbacks(app, get_dashboard_layout)
+register_statistics_callbacks(app)
 
 @app.callback(
     Output('data-store', 'data'),
@@ -110,10 +68,22 @@ def upload_files_or_zips(contents_list, filenames, data):
     return dash.no_update
 
 
-import logging
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+def display_page(pathname):
+    if not pathname or pathname == '/':  # If no path or root path
+        return get_login_layout()  # Redirect to login layout
+    elif pathname == '/dashboard':
+        return get_dashboard_layout()
+    elif pathname == '/register':
+        return get_register_layout()
+    elif pathname == '/statistics':
+        return get_statistics_layout()
+    else:
+        return get_login_layout()  # Default to login if no matching path
+
+import logging
 
 @app.callback(
     [Output('output-container', 'children'),
@@ -123,10 +93,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
      Input('date-dropdown', 'value'),
-     Input('data-store', 'data'),
-     Input('theme-store', 'data')],
+     Input('data-store', 'data')],
 )
-def update_output(view_type, selected_energy_type, selected_date, data, theme):
+def update_output(view_type, selected_energy_type, selected_date, data):
+    if not session.get('logged_in'):  # Check if the user is logged in
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
     if not data:
         logging.error("Data is empty or None.")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -155,7 +127,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         logging.error(f"Error generating date options: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    # Filter or aggregate data
+    # Filter or aggregate data by date
     try:
         if selected_date == 'all':
             df_filtered = df_combined
@@ -166,7 +138,6 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
                 return dash.no_update, dash.no_update, dash.no_update, dash.no_update
             df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
             df_filtered['Date'] = 'Average'
-            # Reorder columns to place 'Date' at the beginning
             columns_order = ['Date'] + [col for col in df_filtered.columns if col != 'Date']
             df_filtered = df_filtered[columns_order]
         else:
@@ -175,10 +146,23 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         logging.error(f"Error filtering or aggregating data: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    # Automatically set energy type to 'all' for graph view
-    if view_type == 'graph' and (selected_energy_type is None or selected_energy_type == ''):
-        selected_energy_type = 'all'
+    # Filter by energy type
+    try:
+        if selected_energy_type and selected_energy_type != 'all':
+            if selected_energy_type in df_filtered.columns:
+                df_filtered = df_filtered[['Date', 'Time', selected_energy_type]]
+            else:
+                logging.error(f"Selected energy type '{selected_energy_type}' not found in columns.")
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        else:
+            # If 'all' is selected, don't filter down to just one column
+            pass
 
+    except Exception as e:
+        logging.error(f"Error filtering by energy type: {e}")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    # Render table or graph
     if view_type == 'table':
         try:
             return (dash_table.DataTable(
@@ -196,38 +180,20 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
 
     elif view_type == 'graph':
         try:
-            # Filter energy columns
-            energy_columns = [col for col in df_filtered.columns if col in pulse_ratios.keys()]
-            if not energy_columns:
-                logging.error("No energy columns available for graphing.")
-                return html.Div("No energy data available for graphing."), date_options, selected_date, selected_energy_type
-
             # Melt DataFrame for graphing
             df_melted = df_filtered.melt(
                 id_vars=['Time', 'Date'],
-                value_vars=energy_columns,
+                value_vars=[selected_energy_type] if selected_energy_type != 'all' else df_filtered.columns[2:],
                 var_name='Energy Type',
                 value_name='Usage'
             )
 
-
-            # Determine colouring logic
-            if selected_date in ['all', 'average']:
-                color_col = 'Energy Type'  # Show each energy type across all days
-                line_group_col = 'Date' if selected_date == 'all' else None
-            else:
-                color_col = 'Energy Type'  # For single date, show different energy types
-                line_group_col = None
-
-            # Create line graph
             fig = px.line(
                 df_melted,
                 x='Time',
                 y='Usage',
-                color=color_col,
-                line_group=line_group_col,
-                title=f'Energy Usage on {selected_date}' if selected_date not in ['all',
-                                                                                  'average'] else 'Energy Usage Over Time',
+                color='Energy Type',
+                title=f'Energy Usage on {selected_date}' if selected_date not in ['all', 'average'] else 'Energy Usage Over Time',
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
             )
 
@@ -236,17 +202,7 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-@app.callback(
-    Output('toolbar-collapse', 'is_open'),
-    Input('toggle-toolbar-button', 'n_clicks'),
-    State('toolbar-collapse', 'is_open')
-)
-
-def toggle_toolbar(n_clicks, is_open):
-    # Ensure the callback works even if the button hasn't been clicked yet
-    if n_clicks is None:
-        return is_open
-    return not is_open
 
 if __name__ == '__main__':
     app.run(debug=True)
+
