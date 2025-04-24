@@ -11,7 +11,6 @@ def get_dashboard_layout():
     dashboard_layout = html.Div(id='theme-wrapper', children=[
         dcc.Store(id='saved-views-store', storage_type='local'),
         html.H1('Energy Usage Dashboard', className='header-title'),
-        dcc.Link('Go to Register Page', href='/register'),
         html.Div([
             dcc.Input(id='save-name-input', type='text', placeholder='Enter view name...'),
             html.Button('Save View', id='save-view-button', n_clicks=0)
@@ -31,17 +30,6 @@ def get_dashboard_layout():
                         value='table',
                         labelStyle={'display': 'inline-block'}
                     ),
-                    dcc.RadioItems(
-                        id='theme-toggle',
-                        options=[
-                            {'label': 'Light Mode', 'value': 'light'},
-                            {'label': 'Dark Mode', 'value': 'dark'}
-                        ],
-                        value='light',
-                        labelStyle={'display': 'inline-block', 'margin-right': '1rem'},
-                        style={'margin-bottom': '20px'}
-                    ),
-                    dcc.Store(id='theme-store', storage_type='session')
                 ])
             ]
         ),
@@ -56,7 +44,8 @@ def get_dashboard_layout():
                      className='date-select-dropdown',
                      placeholder='Select a date'),
         dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
-        dcc.Store(id='data-store', data=initial_df.to_dict('records'))
+        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
+        dcc.Link(html.Button('Go to Statistics', className='button', style={'marginTop': '10px'}),href='/statistics')
     ])
     return dashboard_layout
 
@@ -74,7 +63,6 @@ def get_login_layout():
 def get_register_layout():
     register_layout = html.Div(id='theme-wrapper', children=[
         html.H2("Register", style={'textAlign': 'center'}),
-        dcc.Link('Go to Dashboard', href='/dashboard'),
         dcc.Input(id='register-username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
         dcc.Input(id='register-password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
         html.Button('Register', id='register-button', n_clicks=0),
@@ -88,3 +76,25 @@ def get_register_layout():
         html.Div(id='login-message', style={'display': 'none'})
     ])
     return register_layout
+
+def get_statistics_layout():
+    statistics_layout = html.Div(id='theme-wrapper', children=[
+        dcc.Store(id='data-store'),
+        html.H1("Energy Usage Statistics", className='header-title'),
+        html.Div(id='statistics-output', className='statistics-container'),
+        dcc.Dropdown(
+            id='statistics-energy-type-dropdown',
+            options=[
+                {'label': 'All Energy Types', 'value': 'all'},
+                {'label': 'Electricity (kWh)', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
+                {'label': 'Gas (kWh)', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
+                {'label': 'Water 1 (kWh)', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
+                {'label': 'Water 2 (kWh)', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
+            ],
+            value='all',
+            placeholder='Select Energy Type',
+            className = 'statistics-energy-type-dropdown'
+        ),
+        dcc.Link(html.Button('Go to Dashboard', className='button', style={'marginTop': '10px'}),href='/dashboard')
+    ])
+    return statistics_layout

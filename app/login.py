@@ -4,31 +4,32 @@ from flask import session
 from app.auth import login_user
 logging.basicConfig(level=logging.DEBUG)
 from app.layouts import get_login_layout, get_register_layout
-
+from dash import no_update
 
 def register_login_callbacks(app, get_dashboard_layout):
     @app.callback(
-        Output('theme-wrapper', 'children'),  # Update the target to 'theme-wrapper'
+        [Output('theme-wrapper', 'children'),  # Update the page content
+         Output('url', 'pathname')],          # Update the URL
         [Input('login-button', 'n_clicks'),
          Input('go-to-register', 'n_clicks')],
         [State('username', 'value'), State('password', 'value')]
     )
     def update_page_content(n_clicks, n_register_clicks, username, password):
-        logging.debug(f"Login button clicked: n_clicks={n_clicks}, username={username}")
         if n_register_clicks:
-            # Redirect to login page
-            return get_register_layout(), ""
+            return get_register_layout(), '/register'  # Redirect to register page
+
         if n_clicks:
             response, status_code = login_user(username, password)
             if status_code == 200:  # Login successful
                 session['logged_in'] = True
-                return get_dashboard_layout()
+                return get_dashboard_layout(), '/dashboard'  # Redirect to dashboard
             else:  # Login failed
                 return html.Div([
                     get_login_layout(),
                     html.Div(response['error'], style={'color': 'red', 'marginTop': '10px'})
-                ])
-        return get_login_layout()
+                ]), no_update  # Keep the current URL
+
+        return get_login_layout(), no_update  # Default to login layout
 
 import dash
 from dash import Input, Output, State, html

@@ -9,8 +9,9 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout
 from app.login import register_login_callbacks
+from app.statistics import register_statistics_callbacks
 from app import routes
 
 # Create a Flask server instance
@@ -26,8 +27,6 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize the database with the Flask server
 init_db(server)
 
-
-
 app = Dash(
     __name__,
     server=server,
@@ -39,18 +38,17 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     html.Div(id='page-content'),
     get_login_layout(),
     get_dashboard_layout(),
-    get_register_layout()
+    get_register_layout(),
+    get_statistics_layout()
 ])
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),  # Ensure that 'url' is in the layout
-    html.Div(id='page-content'),
-    html.Div([dcc.Link('Go to Dashboard', href='/dashboard')])
+    html.Div(id='page-content')
 ])
 
-
 register_login_callbacks(app, get_dashboard_layout)
-
+register_statistics_callbacks(app)
 
 @app.callback(
     Output('data-store', 'data'),
@@ -74,16 +72,18 @@ def upload_files_or_zips(contents_list, filenames, data):
               [Input('url', 'pathname')])
 
 def display_page(pathname):
-    if pathname == '/dashboard':
+    if not pathname or pathname == '/':  # If no path or root path
+        return get_login_layout()  # Redirect to login layout
+    elif pathname == '/dashboard':
         return get_dashboard_layout()
     elif pathname == '/register':
         return get_register_layout()
+    elif pathname == '/statistics':
+        return get_statistics_layout()
     else:
         return get_login_layout()  # Default to login if no matching path
 
-
 import logging
-
 
 @app.callback(
     [Output('output-container', 'children'),
@@ -93,10 +93,9 @@ import logging
     [Input('view-type-radio', 'value'),
      Input('energy-type-dropdown', 'value'),
      Input('date-dropdown', 'value'),
-     Input('data-store', 'data'),
-     Input('theme-store', 'data')],
+     Input('data-store', 'data')],
 )
-def update_output(view_type, selected_energy_type, selected_date, data, theme):
+def update_output(view_type, selected_energy_type, selected_date, data):
     if not session.get('logged_in'):  # Check if the user is logged in
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
@@ -202,14 +201,6 @@ def update_output(view_type, selected_energy_type, selected_date, data, theme):
         except Exception as e:
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
