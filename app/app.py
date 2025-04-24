@@ -1,12 +1,12 @@
 # app.py
 import os
 import pandas as pd
-import dash_bootstrap_components as dbc
 import plotly.express as px
+import logging
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
-from app.config import pulse_ratios, energy_meter_options
+from app.config import pulse_ratios
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
 from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout
@@ -50,6 +50,7 @@ app.layout = html.Div([
 register_login_callbacks(app, get_dashboard_layout)
 register_statistics_callbacks(app)
 
+
 @app.callback(
     Output('data-store', 'data'),
     [Input('add-file', 'contents')],
@@ -67,10 +68,8 @@ def upload_files_or_zips(contents_list, filenames, data):
         return updated_df.to_dict('records')
     return dash.no_update
 
-
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
-
 def display_page(pathname):
     if not pathname or pathname == '/':  # If no path or root path
         return get_login_layout()  # Redirect to login layout
@@ -82,8 +81,6 @@ def display_page(pathname):
         return get_statistics_layout()
     else:
         return get_login_layout()  # Default to login if no matching path
-
-import logging
 
 @app.callback(
     [Output('output-container', 'children'),
@@ -202,7 +199,5 @@ def update_output(view_type, selected_energy_type, selected_date, data):
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-
 if __name__ == '__main__':
     app.run(debug=True)
-

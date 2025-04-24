@@ -259,3 +259,8 @@ html, body, #_dash-app-content, #theme-wrapper {
 .statistics-written-data {
     text-align: center;
 }
+
+.register-message{
+    'color': 'red'
+    'marginTop': '10px'
+}

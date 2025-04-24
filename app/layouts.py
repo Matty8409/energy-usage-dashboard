@@ -9,13 +9,7 @@ def get_dashboard_layout():
     initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
     dashboard_layout = html.Div(id='theme-wrapper', children=[
-        dcc.Store(id='saved-views-store', storage_type='local'),
         html.H1('Energy Usage Dashboard', className='header-title'),
-        html.Div([
-            dcc.Input(id='save-name-input', type='text', placeholder='Enter view name...'),
-            html.Button('Save View', id='save-view-button', n_clicks=0)
-        ]),
-        dcc.Dropdown(id='saved-view-dropdown', placeholder='Load a saved view...'),
         dbc.Collapse(
             id='toolbar-collapse',
             is_open=False,  # Initially collapsed
@@ -67,13 +61,13 @@ def get_register_layout():
         dcc.Input(id='register-password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
         html.Button('Register', id='register-button', n_clicks=0),
         html.Button('Go to Login', id='go-to-login', n_clicks=0, style={'marginTop': '10px'}),
-        html.Div(id='register-message', style={'color': 'red', 'marginTop': '10px'}),
+        html.Div(id='register-message', className='register-message'),
         # Hidden login elements
         dcc.Input(id='username', type='text', placeholder='Enter Username', style={'display': 'none'}),
         dcc.Input(id='password', type='password', placeholder='Enter Password', style={'display': 'none'}),
         html.Button('Login', id='login-button', n_clicks=0, style={'display': 'none'}),
-        html.Button('Go to Register', id='go-to-register', n_clicks=0, style={'display': 'none'}),
-        html.Div(id='login-message', style={'display': 'none'})
+        dcc.Link(html.Button('Go to Register', className='go-to-register', style={'marginTop': '10px'}),href='/register'),
+        html.Div(id='login-message')
     ])
     return register_layout
 
