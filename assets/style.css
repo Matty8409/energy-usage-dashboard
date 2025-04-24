@@ -8,10 +8,8 @@
 
 .header-title {
     text-align: center;
-    font-family: 'Arial, sans-serif';
     font-size: 36px !important;
     font-weight: bold !important;
-    margin-bottom: 20px !important;
 }
 
 .light-mode .body {
@@ -242,4 +240,22 @@ html, body, #_dash-app-content, #theme-wrapper {
 
 .statistics-energy-type-dropdown {
     width: 300px;
+}
+
+.statistics-graph {
+    width: 900px;
+    height: 80vh;
+}
+
+.statistics-container {
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.statistics-written-data {
+    text-align: center;
 }

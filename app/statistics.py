@@ -67,4 +67,4 @@ def register_statistics_callbacks(app):
             html.P(f"Highest Usage: {highest_usage}"),
             html.P(f"Time of Maximum Usage: {max_time}"),
             dcc.Graph(figure=fig, className='statistics-graph')
-        ])
+        ], className='statistics-written-data')
