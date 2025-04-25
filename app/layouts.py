@@ -66,7 +66,6 @@ def get_register_layout():
         dcc.Input(id='username', type='text', placeholder='Enter Username', style={'display': 'none'}),
         dcc.Input(id='password', type='password', placeholder='Enter Password', style={'display': 'none'}),
         html.Button('Login', id='login-button', n_clicks=0, style={'display': 'none'}),
-        dcc.Link(html.Button('Go to Register', className='go-to-register', style={'marginTop': '10px'}),href='/register'),
         html.Div(id='login-message')
     ])
     return register_layout

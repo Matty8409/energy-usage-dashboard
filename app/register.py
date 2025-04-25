@@ -10,6 +10,7 @@ def register_register_callbacks(app):
         [Output('theme-wrapper', 'children'),  # Update the page content
          Output('register-message', 'children')],  # Display registration feedback
         [Input('register-button', 'n_clicks')],
+        [Input('go-to-login', 'n_clicks')]
         [State('register-username', 'value'),
          State('register-password', 'value')]
     )
@@ -27,6 +28,11 @@ def register_register_callbacks(app):
                 return get_register_layout(), html.Div(response.get('error', 'Registration failed.'), style={'color': 'red'})
 
         return get_register_layout(), ""
+
+    def go_to_login(n_clicks):
+        if dash.callback_context.triggered_id == 'go-to-login' and n_clicks:
+            return get_login_layout()
+        return dash.no_update
 
     @app.callback(
         Output('theme-wrapper', 'children'),  # Update the target to 'theme-wrapper'
