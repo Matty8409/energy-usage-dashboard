@@ -7,3 +7,4 @@ pandas==2.2.3
 plotly==6.0.0
 pytest==8.3.5
 Werkzeug==3.0.1
+gunicorn==21.2.0
