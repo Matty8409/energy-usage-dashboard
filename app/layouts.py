@@ -19,7 +19,8 @@ def get_dashboard_layout():
                         id='view-type-radio',
                         options=[
                             {'label': 'Table View', 'value': 'table'},
-                            {'label': 'Line Graph View', 'value': 'graph'}
+                            {'label': 'Line Graph View', 'value': 'graph'},
+                            {'label': 'Heat map', 'value': 'heatmap'}
                         ],
                         value='table',
                         labelStyle={'display': 'inline-block'}
@@ -74,7 +75,6 @@ def get_statistics_layout():
     statistics_layout = html.Div(id='theme-wrapper', children=[
         dcc.Store(id='data-store'),
         html.H1("Energy Usage Statistics", className='header-title'),
-        html.Div(id='statistics-output', className='statistics-container'),
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
             options=[
@@ -86,8 +86,45 @@ def get_statistics_layout():
             ],
             value='all',
             placeholder='Select Energy Type',
-            className = 'statistics-energy-type-dropdown'
+            className='statistics-energy-type-dropdown'
         ),
+        html.Div(id='statistics-output', className='statistics-container'),
         dcc.Link(html.Button('Go to Dashboard', className='button', style={'marginTop': '10px'}),href='/dashboard')
     ])
     return statistics_layout
+
+def get_save_data_collection_layout():
+    save_data_collection_layout = html.Div(id='theme-wrapper', children=[
+        html.H2("Save and Collect Data", style={'textAlign': 'center'}),
+        dcc.Input(id='data-input', type='text', placeholder='Enter data', style={'margin': '10px'}),
+
+        dcc.Dropdown(
+            id='energy-type-dropdown',
+            options=energy_meter_options,
+            value='all',  # Default value
+            style={'margin': '10px'}
+        ),
+        dcc.Dropdown(id='date-dropdown',
+                     className='date-select-dropdown',
+                     placeholder='Select a date'),
+
+        html.Button('Save Data', id='save-data-button', n_clicks=0, style={'margin': '10px'}),
+        html.Div(id='save-data-message', style={'color': 'green', 'marginTop': '10px'}),
+        html.Hr(),
+        html.H3("Saved Data", style={'textAlign': 'center'}),
+        html.Div(id='saved-data-display'),
+        dcc.Store(id='saved-data-store', data=[]),  # Store to hold saved data
+        dcc.Store(id='data-store', data=[]),
+        dcc.RadioItems(
+            id='view-type-radio',
+            options=[
+                {'label': 'Table View', 'value': 'table'},
+                {'label': 'Line Graph View', 'value': 'graph'}
+            ],
+            value='table',
+            labelStyle={'display': 'inline-block'}
+        ),
+        html.Div(id='output-container'),  # Ensure this is included
+    ])
+    return save_data_collection_layout
+

@@ -9,8 +9,9 @@ from flask import Flask, session
 from app.config import pulse_ratios
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout
 from app.login import register_login_callbacks
+from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
 
@@ -39,16 +40,14 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     get_login_layout(),
     get_dashboard_layout(),
     get_register_layout(),
-    get_statistics_layout()
+    get_statistics_layout(),
+    get_save_data_collection_layout()
 ])
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),  # Ensure that 'url' is in the layout
     html.Div(id='page-content')
 ])
-
-register_login_callbacks(app, get_dashboard_layout)
-register_statistics_callbacks(app)
 
 
 @app.callback(
@@ -73,6 +72,8 @@ def upload_files_or_zips(contents_list, filenames, data):
 def display_page(pathname):
     if not pathname or pathname == '/':  # If no path or root path
         return get_login_layout()  # Redirect to login layout
+    elif pathname == '/save-data-collection':
+        return get_save_data_collection_layout()
     elif pathname == '/dashboard':
         return get_dashboard_layout()
     elif pathname == '/register':
@@ -81,6 +82,14 @@ def display_page(pathname):
         return get_statistics_layout()
     else:
         return get_login_layout()  # Default to login if no matching path
+
+def register_callbacks():
+    register_login_callbacks(app, get_dashboard_layout)
+    register_statistics_callbacks(app)
+    register_save_data_callbacks(app)
+
+register_callbacks()
+
 
 @app.callback(
     [Output('output-container', 'children'),
@@ -154,7 +163,6 @@ def update_output(view_type, selected_energy_type, selected_date, data):
         else:
             # If 'all' is selected, don't filter down to just one column
             pass
-
     except Exception as e:
         logging.error(f"Error filtering by energy type: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -174,6 +182,33 @@ def update_output(view_type, selected_energy_type, selected_date, data):
         except Exception as e:
             logging.error(f"Error creating table view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    # Heatmap View
+    if view_type == 'heatmap':
+        try:
+            # Default to "Electricity" for heatmap if "all" is selected
+            if selected_energy_type == 'all':
+                selected_energy_type = 'TH-E-01 kWh (kWh) [DELTA] 1'
+
+            energy_column_for_heatmap = selected_energy_type
+
+            if energy_column_for_heatmap in df_filtered.columns:
+                df_filtered_heatmap = df_filtered.pivot(index='Time', columns='Date', values=energy_column_for_heatmap)
+
+                fig = px.imshow(
+                    df_filtered_heatmap,
+                    labels=dict(x="Date", y="Time", color=selected_energy_type),
+                    title=f"Heatmap of {selected_energy_type}"
+                )
+                return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+            else:
+                logging.error(f"Selected energy type '{selected_energy_type}' not found in the filtered data.")
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+        except Exception as e:
+            logging.error(f"Error creating heatmap view: {e}")
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
 
     elif view_type == 'graph':
         try:
