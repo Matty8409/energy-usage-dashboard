@@ -22,7 +22,18 @@ routes.register_routes()
 
 server.config['SECRET_KEY'] = os.urandom(24)
 
-server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Heroku's DATABASE_URL sometimes needs slight adjustment for SQLAlchemy
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+    server.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # Local development fallback
+    server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database with the Flask server
