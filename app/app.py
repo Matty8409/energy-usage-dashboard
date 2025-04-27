@@ -8,12 +8,13 @@ from dash.dependencies import Input, Output, State
 from flask import Flask, session
 from app.config import pulse_ratios, energy_type_mapping
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
-from app.database import init_db
+from app.database import init_db, db
 from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout
 from app.login import register_login_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
+from app.models import User
 
 # Create a Flask server instance
 server = Flask(__name__)
@@ -22,7 +23,18 @@ routes.register_routes()
 
 server.config['SECRET_KEY'] = os.urandom(24)
 
-server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Heroku's DATABASE_URL sometimes needs slight adjustment for SQLAlchemy
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+    server.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # Local development fallback
+    server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database with the Flask server
