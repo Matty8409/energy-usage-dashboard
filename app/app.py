@@ -206,7 +206,19 @@ def update_output(view_type, selected_energy_type, selected_date, data):
                 data=df_filtered.to_dict('records'),
                 columns=columns,
                 page_size=len(df_filtered),
-                style_table={'height': '600px', 'overflowY': 'auto'}
+                style_table={
+                    'maxHeight': '500px',  # Set a maximum height for the table
+                    'overflowY': 'auto',  # Enable vertical scrolling within the table
+                    'border': 'none'  # Optional: Remove border for cleaner look
+                },
+                style_cell={
+                    'textAlign': 'left',  # Align text to the left
+                    'padding': '10px',  # Add padding for better readability
+                },
+                style_header={
+                    'backgroundColor': 'lightgrey',  # Optional: Header styling
+                    'fontWeight': 'bold'
+                }
             ),
                     date_options,
                     selected_date,

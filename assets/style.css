@@ -134,15 +134,6 @@ html, body, #_dash-app-content, #theme-wrapper {
     flex-direction: column;
 }
 
-#theme-wrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Space out elements evenly */
-    align-items: center;
-    padding: 10px;
-    width: 90%;
-}
-
 .energy-type-dropdown {
     display: flex;
     min-width: 160px;
@@ -263,4 +254,15 @@ html, body, #_dash-app-content, #theme-wrapper {
 .register-message{
     'color': 'red'
     'marginTop': '10px'
+}
+
+
+#theme-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Space out elements evenly */
+    align-items: center;
+    margin: 0 auto;
+    padding: 10px;
+    width: 90%;
 }
