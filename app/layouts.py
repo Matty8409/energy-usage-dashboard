@@ -26,7 +26,7 @@ def get_dashboard_layout():
                         labelStyle={'display': 'inline-block'}
                     ),
                 ])
-            ]
+        ]
         ),
         dcc.Dropdown(
             id='energy-type-dropdown',

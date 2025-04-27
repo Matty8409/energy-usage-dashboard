@@ -6,7 +6,7 @@ import logging
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
-from app.config import pulse_ratios
+from app.config import pulse_ratios, energy_type_mapping
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
 from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout
@@ -155,14 +155,20 @@ def update_output(view_type, selected_energy_type, selected_date, data):
     # Filter by energy type
     try:
         if selected_energy_type and selected_energy_type != 'all':
+            # selected_energy_type is still the technical name here (e.g., 'TH-E-01 kWh (kWh) [DELTA] 1')
+
             if selected_energy_type in df_filtered.columns:
                 df_filtered = df_filtered[['Date', 'Time', selected_energy_type]]
             else:
                 logging.error(f"Selected energy type '{selected_energy_type}' not found in columns.")
                 return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+            # For graph titles, show the pretty name
+            readable_energy_type = energy_type_mapping.get(selected_energy_type, selected_energy_type)
+
         else:
             # If 'all' is selected, don't filter down to just one column
-            pass
+            readable_energy_type = 'All Energy Types'
     except Exception as e:
         logging.error(f"Error filtering by energy type: {e}")
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
@@ -170,19 +176,35 @@ def update_output(view_type, selected_energy_type, selected_date, data):
     # Render table or graph
     if view_type == 'table':
         try:
+            if selected_energy_type != 'all' and selected_energy_type in df_filtered.columns:
+                table_data = df_filtered[['Date', 'Time', selected_energy_type]]
+            else:
+                # 'all' selected — include all energy type columns
+                table_data = df_filtered
+
+            columns = []
+            for col in df_filtered.columns:
+                if col in energy_type_mapping:
+                    pretty_name = energy_type_mapping[col]
+                else:
+                    pretty_name = col  # fallback: use the original if not in mapping
+                columns.append({"name": pretty_name, "id": col})
+
             return (dash_table.DataTable(
                 data=df_filtered.to_dict('records'),
-                columns=[{"name": i, "id": i} for i in df_filtered.columns],
+                columns=columns,
                 page_size=len(df_filtered),
                 style_table={'height': '600px', 'overflowY': 'auto'}
             ),
                     date_options,
                     selected_date,
                     selected_energy_type)
+
         except Exception as e:
             logging.error(f"Error creating table view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
+    # Heatmap View
     # Heatmap View
     if view_type == 'heatmap':
         try:
@@ -192,13 +214,16 @@ def update_output(view_type, selected_energy_type, selected_date, data):
 
             energy_column_for_heatmap = selected_energy_type
 
+            # Get the readable name for display
+            readable_energy_type = energy_type_mapping.get(energy_column_for_heatmap, energy_column_for_heatmap)
+
             if energy_column_for_heatmap in df_filtered.columns:
                 df_filtered_heatmap = df_filtered.pivot(index='Time', columns='Date', values=energy_column_for_heatmap)
 
                 fig = px.imshow(
                     df_filtered_heatmap,
-                    labels=dict(x="Date", y="Time", color=selected_energy_type),
-                    title=f"Heatmap of {selected_energy_type}"
+                    labels=dict(x="Date", y="Time", color=readable_energy_type),
+                    title=f"Heatmap for {readable_energy_type}"
                 )
                 return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
             else:
@@ -208,7 +233,6 @@ def update_output(view_type, selected_energy_type, selected_date, data):
         except Exception as e:
             logging.error(f"Error creating heatmap view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
 
     elif view_type == 'graph':
         try:
