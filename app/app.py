@@ -3,18 +3,18 @@ import os
 import pandas as pd
 import plotly.express as px
 import logging
+import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
 from app.config import pulse_ratios, energy_type_mapping
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
-from app.database import init_db, db
+from app.database import init_db
 from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout
 from app.login import register_login_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
-from app.models import User
 
 # Create a Flask server instance
 server = Flask(__name__)
@@ -43,6 +43,7 @@ init_db(server)
 app = Dash(
     __name__,
     server=server,
+    external_stylesheets=[dbc.themes.FLATLY],
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
 
@@ -82,12 +83,14 @@ def upload_files_or_zips(contents_list, filenames, data):
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if not pathname or pathname == '/':  # If no path or root path
-        return get_login_layout()  # Redirect to login layout
+    # Check if the user is logged in
+    if not session.get('logged_in'):
+        return get_login_layout()  # Redirect to login layout if not logged in
+    # Handle page routing
+    if pathname == '/dashboard':
+        return get_dashboard_layout()
     elif pathname == '/save-data-collection':
         return get_save_data_collection_layout()
-    elif pathname == '/dashboard':
-        return get_dashboard_layout()
     elif pathname == '/register':
         return get_register_layout()
     elif pathname == '/statistics':
@@ -228,7 +231,6 @@ def update_output(view_type, selected_energy_type, selected_date, data):
             logging.error(f"Error creating table view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
-    # Heatmap View
     # Heatmap View
     if view_type == 'heatmap':
         try:

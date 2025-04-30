@@ -229,6 +229,21 @@ html, body, #_dash-app-content, #theme-wrapper {
     height: 80vh;
 }
 
+.register-message{
+    'color': 'red'
+    'marginTop': '10px'
+}
+
+#theme-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Space out elements evenly */
+    align-items: center;
+    margin: 0 auto;
+    padding: 10px;
+    width: 90%;
+}
+
 .statistics-energy-type-dropdown {
     width: 300px;
 }
@@ -239,30 +254,88 @@ html, body, #_dash-app-content, #theme-wrapper {
 }
 
 .statistics-container {
-    width: 600px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    margin: 0 auto;
 }
 
 .statistics-written-data {
     text-align: center;
 }
 
-.register-message{
-    'color': 'red'
-    'marginTop': '10px'
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));  /* Two items per row */
+    gap: 20px; /* Space between items */
+    justify-items: center; /* Center items horizontally */
+    align-items: start; /* Align items at the top */
+    width: 100%;
+    margin: 0 auto;
+    max-width: 1200%;
+    height: 200px;
 }
 
+.statistics-item {
+    width: 100%; /* Adjust width as needed */
+    max-width: 300px; /* Optional: Limit the size of each item */
+    text-align: center;
+}
 
-#theme-wrapper {
+.btn-primary {
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    height: 38px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker shade for hover */
+    border-color: #0056b3;
+}
+
+.login-input {
+    width: 390px;
+    height: 38px;
+    font-size: 16px;
+    padding: 6px 10px;
+}
+
+.login-button-group {
     display: flex;
-    flex-direction: column;
-    justify-content: center; /* Space out elements evenly */
-    align-items: center;
-    margin: 0 auto;
-    padding: 10px;
-    width: 90%;
+    justify-content: center;
+    gap: 10px; /* space between buttons */
+    margin-top: 10px;
+}
+
+.login-button {
+    font-size: 16px;
+    height: 60px;
+    width: 160px;
+    text-align: center;
+}
+
+.upload-button {
+    all: unset; /* Reset all styles */
+    display: inline-block;
+    font-size: 16px;
+    height: 60px;
+    width: 160px;
+    text-align: center;
+}
+
+.upload-button.btn-primary {
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    height: 38px;
+    text-align: center;
+}
+
+.upload-button.btn-primary:hover {
+    background-color: #0056b3; /* Match hover color */
+    border-color: #0056b3;
 }

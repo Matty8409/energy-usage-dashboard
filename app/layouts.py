@@ -34,25 +34,36 @@ def get_dashboard_layout():
             value='all',
             className='energy-type-dropdown'
         ),
-        html.Div(id='output-container'),
+        html.Div(
+            id='output-wrapper',
+            children=[
+                dcc.Loading(
+                    id='loading-output',
+                    type='default',  # spinner type (optional)
+                    children=html.Div(id='output-container')
+                )
+            ]
+        ),
         dcc.Dropdown(id='date-dropdown',
                      className='date-select-dropdown',
                      placeholder='Select a date'),
-        dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="button"), multiple=True),
+        dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="me-1 mt-1 btn btn-primary"), multiple=True),
         dcc.Store(id='data-store', data=initial_df.to_dict('records')),
-        dcc.Link(html.Button('Go to Statistics', className='button', style={'marginTop': '10px'}),href='/statistics')
+        dcc.Link(html.Button('Go to Statistics', className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),href='/statistics')
     ])
     return dashboard_layout
 
 def get_login_layout():
-    login_layout = html.Div(id='theme-wrapper', children=[
-        html.H2("Login", style={'textAlign': 'center'}),
-        dcc.Input(id='username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
-        dcc.Input(id='password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
-        html.Button('Login', id='login-button', n_clicks=0),
-        html.Button('Go to Register', id='go-to-register', n_clicks=0, style={'marginTop': '10px'}),
-        html.Div(id='login-message', style={'color': 'red', 'marginTop': '10px'})
-    ])
+    login_layout = dbc.Container([
+        html.H2("Login", className="text-center my-4"),
+        dbc.Input(id='username', type='text', placeholder='Enter Username', className='mb-3 login-input'),
+        dbc.Input(id='password', type='password', placeholder='Enter Password', className='mb-3 login-input'),
+        html.Div([
+            dbc.Button('Login', id='login-button', color='primary', className='btn-primary login-button'),
+            dbc.Button('Go to Register', id='go-to-register', color='primary', className='btn-primary login-button')
+        ], className='login-button-group'),
+        html.Div(id='login-message', className='text-danger mt-3')
+    ], id='theme-wrapper', className='p-4')
     return login_layout
 
 def get_register_layout():
@@ -61,12 +72,12 @@ def get_register_layout():
         dcc.Input(id='register-username', type='text', placeholder='Enter Username', style={'margin': '10px'}),
         dcc.Input(id='register-password', type='password', placeholder='Enter Password', style={'margin': '10px'}),
         html.Button('Register', id='register-button', n_clicks=0),
-        html.Button('Go to Login', id='go-to-login', n_clicks=0, style={'marginTop': '10px'}),
+        html.Button('Go to Login', id='go-to-login', n_clicks=0, className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),
         html.Div(id='register-message', className='register-message'),
         # Hidden login elements
         dcc.Input(id='username', type='text', placeholder='Enter Username', style={'display': 'none'}),
         dcc.Input(id='password', type='password', placeholder='Enter Password', style={'display': 'none'}),
-        html.Button('Login', id='login-button', n_clicks=0, style={'display': 'none'}),
+        html.Button('Login', id='login-button', n_clicks=0, className='me-1 mt-1 btn btn-primary' ,style={'display': 'none'}),
         html.Div(id='login-message')
     ])
     return register_layout
