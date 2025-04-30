@@ -100,7 +100,7 @@ def get_statistics_layout():
             className='statistics-energy-type-dropdown'
         ),
         html.Div(id='statistics-output', className='statistics-container'),
-        dcc.Link(html.Button('Go to Dashboard', className='button', style={'marginTop': '10px'}),href='/dashboard')
+        dcc.Link(html.Button('Go to Dashboard', className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),href='/dashboard')
     ])
     return statistics_layout
 
