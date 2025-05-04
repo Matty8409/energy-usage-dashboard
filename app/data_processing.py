@@ -69,20 +69,31 @@ def process_uploaded_file(contents, filename, existing_data):
         raise
 
 def load_initial_csv_data(path=UPLOAD_FOLDER):
+    logging.debug(f"Loading data from {path}")
     all_files = glob.glob(os.path.join(path, '**', '*.xlsx'), recursive=True)
     combined_data = []
     for filename in all_files:
-        date_key = os.path.basename(filename).split('_')[0]
-        df = pd.read_excel(filename, engine='openpyxl')
-        df['Date'] = date_key
-        combined_data.append(df)
+        logging.debug(f"Processing file: {filename}")
+        try:
+            date_key = os.path.basename(filename).split('_')[0]
+            df = pd.read_excel(filename, engine='openpyxl')
+            df['Date'] = date_key
+            combined_data.append(df)
+        except Exception as e:
+            logging.error(f"Error processing file {filename}: {e}")
 
-    if not combined_data:  # Return an empty DataFrame if no files are found
+    if not combined_data:
+        logging.error("No files found in the upload folder.")
         return pd.DataFrame()
 
     df_combined = pd.concat(combined_data, ignore_index=True)
-    df_combined = df_combined.sort_values(by=['Date', 'Time'])
-    df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
+    logging.debug(f"Combined data before sorting: {df_combined.head()}")
+
+    if 'Date' in df_combined.columns and 'Time' in df_combined.columns:
+        df_combined = df_combined.sort_values(by=['Date', 'Time'])
+        df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
+
+    logging.debug(f"Final loaded data: {df_combined.head()}")
     return df_combined
 
 def apply_pulse_ratios(df, pulse_ratios):
@@ -90,3 +101,4 @@ def apply_pulse_ratios(df, pulse_ratios):
         if column in df.columns:
             df[column] = df[column] * ratio
     return df
+

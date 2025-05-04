@@ -105,7 +105,6 @@ def register_callbacks():
 
 register_callbacks()
 
-
 @app.callback(
     [Output('output-container', 'children'),
      Output('date-dropdown', 'options'),
@@ -283,6 +282,41 @@ def update_output(view_type, selected_energy_type, selected_date, data):
         except Exception as e:
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+# Callback to toggle collapse
+@app.callback(
+    [Output('toolbar-collapse', 'is_open'),
+     Output('toolbar-toggle-button', 'children')],  # Update button text
+    [Input('toolbar-toggle-button', 'n_clicks')],
+    [State('toolbar-collapse', 'is_open')]
+)
+def toggle_toolbar(n_clicks, is_open):
+    if n_clicks:
+        is_open = not is_open
+    else:
+        is_open = is_open  # Keep the current state if no clicks
+
+    # Update button text based on the collapse state
+    button_text = "Hide View Selector" if is_open else "Show View Selector"
+    return is_open, button_text
+
+@app.callback(
+    [Output('date-dropdown', 'options'),
+     Output('date-dropdown', 'value')],
+    [Input('data-store', 'data')]
+)
+def update_date_dropdown(data):
+    if not data:
+        logging.error("Data is empty or None.")
+        return [], None
+
+    df = pd.DataFrame(data)
+    if 'Date' not in df.columns:
+        logging.error("Date column is missing in the data.")
+        return [], None
+
+    date_options = [{'label': date, 'value': date} for date in df['Date'].unique()]
+    return date_options, date_options[0]['value'] if date_options else None
 
 if __name__ == '__main__':
     app.run(debug=True)

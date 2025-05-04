@@ -10,17 +10,24 @@ def get_dashboard_layout():
 
     dashboard_layout = html.Div(id='theme-wrapper', children=[
         html.H1('Energy Usage Dashboard', className='header-title'),
+        dbc.Button(
+            "Show/Hide View Selector",  # Button text
+            id="toolbar-toggle-button",  # Button ID
+            color="primary",  # Button color
+            className="mb-3",  # Add margin below the button
+            n_clicks=0  # Initialize click count
+        ),
         dbc.Collapse(
             id='toolbar-collapse',
-            is_open=False,  # Initially collapsed
+            is_open=True,  # Initially collapsed
             children=[
                 html.Div(id='toolbar', className='toolbar', children=[
                     dcc.RadioItems(
                         id='view-type-radio',
                         options=[
-                            {'label': 'Table View', 'value': 'table'},
-                            {'label': 'Line Graph View', 'value': 'graph'},
-                            {'label': 'Heat map', 'value': 'heatmap'}
+                            {'label': 'Table View ', 'value': 'table'},
+                            {'label': 'Line Graph View ', 'value': 'graph'},
+                            {'label': 'Heat map ', 'value': 'heatmap'}
                         ],
                         value='table',
                         labelStyle={'display': 'inline-block'}
@@ -62,6 +69,8 @@ def get_login_layout():
             dbc.Button('Login', id='login-button', color='primary', className='btn-primary login-button'),
             dbc.Button('Go to Register', id='go-to-register', color='primary', className='btn-primary login-button')
         ], className='login-button-group'),
+        dcc.Input(id='register-username', style={'display': 'none'}),
+        dcc.Input(id='register-password', style={'display': 'none'}),
         html.Div(id='login-message', className='text-danger mt-3')
     ], id='theme-wrapper', className='p-4')
     return login_layout
@@ -75,8 +84,8 @@ def get_register_layout():
         html.Button('Go to Login', id='go-to-login', n_clicks=0, className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),
         html.Div(id='register-message', className='register-message'),
         # Hidden login elements
-        dcc.Input(id='username', type='text', placeholder='Enter Username', style={'display': 'none'}),
-        dcc.Input(id='password', type='password', placeholder='Enter Password', style={'display': 'none'}),
+        dcc.Input(id='register-username', value='', type='text', style={'display': 'none'}),
+        dcc.Input(id='register-password', value='', type='password', style={'display': 'none'}),
         html.Button('Login', id='login-button', n_clicks=0, className='me-1 mt-1 btn btn-primary' ,style={'display': 'none'}),
         html.Div(id='login-message')
     ])
@@ -118,7 +127,6 @@ def get_save_data_collection_layout():
         dcc.Dropdown(id='date-dropdown',
                      className='date-select-dropdown',
                      placeholder='Select a date'),
-
         html.Button('Save Data', id='save-data-button', n_clicks=0, style={'margin': '10px'}),
         html.Div(id='save-data-message', style={'color': 'green', 'marginTop': '10px'}),
         html.Hr(),
@@ -138,4 +146,3 @@ def get_save_data_collection_layout():
         html.Div(id='output-container'),  # Ensure this is included
     ])
     return save_data_collection_layout
-
