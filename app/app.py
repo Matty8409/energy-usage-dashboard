@@ -46,6 +46,15 @@ app = Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     assets_folder=os.path.join(os.path.dirname(__file__), '../assets')  # Explicitly point to the assets folder
 )
+# Load initial data
+initial_df = load_initial_csv_data()
+initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
+
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    dcc.Store(id='data-store', data=initial_df.to_dict('records')),  # Initialize globally
+    html.Div(id='page-content')
+])
 
 app.validation_layout = html.Div([  # Ensure that 'url' is part of the validation layout
     dcc.Location(id='url', refresh=False),
@@ -57,10 +66,6 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     get_save_data_collection_layout()
 ])
 
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),  # Ensure that 'url' is in the layout
-    html.Div(id='page-content')
-])
 
 
 @app.callback(
@@ -222,6 +227,22 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
         except Exception as e:
             logging.error(f"Error creating graph view: {e}")
             return dash.no_update, date_options, selected_date, dash.no_update
+
+@app.callback(
+    [Output('toolbar-collapse', 'is_open'),
+     Output('toolbar-toggle-button', 'children')],  # Update button text
+    [Input('toolbar-toggle-button', 'n_clicks')],
+    [State('toolbar-collapse', 'is_open')]
+)
+def toggle_toolbar(n_clicks, is_open):
+    if n_clicks:
+        is_open = not is_open  # Toggle the state
+    else:
+        is_open = is_open  # Keep the current state if no clicks
+
+    # Update button text based on the collapse state
+    button_text = "Hide View Selector" if is_open else "Show View Selector"
+    return is_open, button_text
 
 if __name__ == '__main__':
     app.run(debug=True)

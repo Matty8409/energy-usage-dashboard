@@ -8,6 +8,8 @@ import zipfile
 import openpyxl
 import logging
 
+from app.config import pulse_ratios
+
 # Dynamically construct the path to the CSV_files folder
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # Get the project root directory
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'CSV_files')  # Path to the CSV_files folder
@@ -75,9 +77,13 @@ def load_initial_csv_data(path=UPLOAD_FOLDER):
     for filename in all_files:
         logging.debug(f"Processing file: {filename}")
         try:
-            date_key = os.path.basename(filename).split('_')[0]
+            # Read the Excel file
             df = pd.read_excel(filename, engine='openpyxl')
-            df['Date'] = pd.to_datetime(date_key)
+
+            # Ensure the `Date` column is in the correct format
+            if 'Date' in df.columns:
+                df['Date'] = pd.to_datetime(df['Date']).dt.date  # Keep only the date part
+
             combined_data.append(df)
         except Exception as e:
             logging.error(f"Error processing file {filename}: {e}")
@@ -86,9 +92,11 @@ def load_initial_csv_data(path=UPLOAD_FOLDER):
         logging.error("No files found in the upload folder.")
         return pd.DataFrame()
 
+    # Combine all data into a single DataFrame
     df_combined = pd.concat(combined_data, ignore_index=True)
     logging.debug(f"Combined data before sorting: {df_combined.head()}")
 
+    # Ensure sorting and grouping by `Date` and `Time` if both columns exist
     if 'Date' in df_combined.columns and 'Time' in df_combined.columns:
         df_combined = df_combined.sort_values(by=['Date', 'Time'])
         df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
@@ -102,3 +110,7 @@ def apply_pulse_ratios(df, pulse_ratios):
             df[column] = df[column] * ratio
     return df
 
+def get_processed_data():
+    df = load_initial_csv_data()
+    df = apply_pulse_ratios(df, pulse_ratios)
+    return df

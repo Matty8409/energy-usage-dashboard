@@ -114,6 +114,8 @@ def get_statistics_layout():
     return statistics_layout
 
 def get_save_data_collection_layout():
+    initial_df = load_initial_csv_data()
+    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
     save_data_collection_layout = html.Div(id='theme-wrapper', children=[
         html.H2("Save and Collect Data", style={'textAlign': 'center'}),
         dcc.Input(id='data-input', type='text', placeholder='Enter data', style={'margin': '10px'}),
@@ -133,7 +135,7 @@ def get_save_data_collection_layout():
         html.H3("Saved Data", style={'textAlign': 'center'}),
         html.Div(id='saved-data-display'),
         dcc.Store(id='saved-data-store', data=[]),  # Store to hold saved data
-        dcc.Store(id='data-store', data=[]),
+        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
         dcc.RadioItems(
             id='view-type-radio',
             options=[
@@ -146,3 +148,4 @@ def get_save_data_collection_layout():
         html.Div(id='output-container'),  # Ensure this is included
     ])
     return save_data_collection_layout
+

@@ -3,6 +3,9 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objects as go
 
+from app.data_processing import get_processed_data
+
+
 def register_statistics_callbacks(app):
     @app.callback(
         Output('statistics-output', 'children'),
