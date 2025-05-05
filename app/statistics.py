@@ -121,3 +121,4 @@ def register_statistics_callbacks(app):
             ], className='statistics-written-data')
 
         return "Invalid energy type selected."
+

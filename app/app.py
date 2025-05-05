@@ -115,25 +115,25 @@ register_callbacks()
      Input('date-dropdown', 'value'),
      Input('data-store', 'data')],
 )
-def update_output(view_type, selected_energy_type, selected_date, data):
+def update_combined(view_type, selected_energy_type, selected_date, data):
     if not session.get('logged_in'):  # Check if the user is logged in
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     if not data:
         logging.error("Data is empty or None.")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, [], None, dash.no_update
 
     # Convert data-store to DataFrame
     try:
         df_combined = pd.DataFrame(data)
     except Exception as e:
         logging.error(f"Error converting data to DataFrame: {e}")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, [], None, dash.no_update
 
     # Ensure required columns exist
     if 'Date' not in df_combined.columns or 'Time' not in df_combined.columns:
         logging.error("Required columns 'Date' or 'Time' are missing.")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, [], None, dash.no_update
 
     # Generate date options
     try:
@@ -145,7 +145,7 @@ def update_output(view_type, selected_energy_type, selected_date, data):
             selected_date = date_options[0]['value']
     except Exception as e:
         logging.error(f"Error generating date options: {e}")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, [], None, dash.no_update
 
     # Filter or aggregate data by date
     try:
@@ -155,7 +155,7 @@ def update_output(view_type, selected_energy_type, selected_date, data):
             numeric_columns = df_combined.select_dtypes(include='number').columns
             if numeric_columns.empty:
                 logging.error("No numeric columns available for averaging.")
-                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+                return dash.no_update, date_options, selected_date, dash.no_update
             df_filtered = df_combined.groupby('Time')[numeric_columns].mean().reset_index()
             df_filtered['Date'] = 'Average'
             columns_order = ['Date'] + [col for col in df_filtered.columns if col != 'Date']
@@ -164,111 +164,52 @@ def update_output(view_type, selected_energy_type, selected_date, data):
             df_filtered = df_combined[df_combined['Date'] == selected_date]
     except Exception as e:
         logging.error(f"Error filtering or aggregating data: {e}")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, date_options, selected_date, dash.no_update
 
     # Filter by energy type
     try:
         if selected_energy_type and selected_energy_type != 'all':
-            # selected_energy_type is still the technical name here (e.g., 'TH-E-01 kWh (kWh) [DELTA] 1')
-
             if selected_energy_type in df_filtered.columns:
                 df_filtered = df_filtered[['Date', 'Time', selected_energy_type]]
             else:
                 logging.error(f"Selected energy type '{selected_energy_type}' not found in columns.")
-                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-            # For graph titles, show the pretty name
+                return dash.no_update, date_options, selected_date, dash.no_update
             readable_energy_type = energy_type_mapping.get(selected_energy_type, selected_energy_type)
-
         else:
-            # If 'all' is selected, don't filter down to just one column
             readable_energy_type = 'All Energy Types'
     except Exception as e:
         logging.error(f"Error filtering by energy type: {e}")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, date_options, selected_date, dash.no_update
 
     # Render table or graph
     if view_type == 'table':
         try:
-            if selected_energy_type != 'all' and selected_energy_type in df_filtered.columns:
-                table_data = df_filtered[['Date', 'Time', selected_energy_type]]
-            else:
-                # 'all' selected — include all energy type columns
-                table_data = df_filtered
-
-            columns = []
-            for col in df_filtered.columns:
-                if col in energy_type_mapping:
-                    pretty_name = energy_type_mapping[col]
-                else:
-                    pretty_name = col  # fallback: use the original if not in mapping
-                columns.append({"name": pretty_name, "id": col})
-
-            return (dash_table.DataTable(
-                data=df_filtered.to_dict('records'),
-                columns=columns,
-                page_size=len(df_filtered),
-                style_table={
-                    'maxHeight': '500px',  # Set a maximum height for the table
-                    'overflowY': 'auto',  # Enable vertical scrolling within the table
-                    'border': 'none'  # Optional: Remove border for cleaner look
-                },
-                style_cell={
-                    'textAlign': 'left',  # Align text to the left
-                    'padding': '10px',  # Add padding for better readability
-                },
-                style_header={
-                    'backgroundColor': 'lightgrey',  # Optional: Header styling
-                    'fontWeight': 'bold'
-                }
-            ),
-                    date_options,
-                    selected_date,
-                    selected_energy_type)
-
+            columns = [{"name": energy_type_mapping.get(col, col), "id": col} for col in df_filtered.columns]
+            return (
+                dash_table.DataTable(
+                    data=df_filtered.to_dict('records'),
+                    columns=columns,
+                    page_size=len(df_filtered),
+                    style_table={'maxHeight': '500px', 'overflowY': 'auto', 'border': 'none'},
+                    style_cell={'textAlign': 'left', 'padding': '10px'},
+                    style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'}
+                ),
+                date_options,
+                selected_date,
+                selected_energy_type
+            )
         except Exception as e:
             logging.error(f"Error creating table view: {e}")
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-    # Heatmap View
-    if view_type == 'heatmap':
-        try:
-            # Default to "Electricity" for heatmap if "all" is selected
-            if selected_energy_type == 'all':
-                selected_energy_type = 'TH-E-01 kWh (kWh) [DELTA] 1'
-
-            energy_column_for_heatmap = selected_energy_type
-
-            # Get the readable name for display
-            readable_energy_type = energy_type_mapping.get(energy_column_for_heatmap, energy_column_for_heatmap)
-
-            if energy_column_for_heatmap in df_filtered.columns:
-                df_filtered_heatmap = df_filtered.pivot(index='Time', columns='Date', values=energy_column_for_heatmap)
-
-                fig = px.imshow(
-                    df_filtered_heatmap,
-                    labels=dict(x="Date", y="Time", color=readable_energy_type),
-                    title=f"Heatmap for {readable_energy_type}"
-                )
-                return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
-            else:
-                logging.error(f"Selected energy type '{selected_energy_type}' not found in the filtered data.")
-                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-        except Exception as e:
-            logging.error(f"Error creating heatmap view: {e}")
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+            return dash.no_update, date_options, selected_date, dash.no_update
 
     elif view_type == 'graph':
         try:
-            # Melt DataFrame for graphing
             df_melted = df_filtered.melt(
                 id_vars=['Time', 'Date'],
                 value_vars=[selected_energy_type] if selected_energy_type != 'all' else df_filtered.columns[2:],
                 var_name='Energy Type',
                 value_name='Usage'
             )
-
             fig = px.line(
                 df_melted,
                 x='Time',
@@ -277,46 +218,10 @@ def update_output(view_type, selected_energy_type, selected_date, data):
                 title=f'Energy Usage on {selected_date}' if selected_date not in ['all', 'average'] else 'Energy Usage Over Time',
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
             )
-
             return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
         except Exception as e:
             logging.error(f"Error creating graph view: {e}")
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-# Callback to toggle collapse
-@app.callback(
-    [Output('toolbar-collapse', 'is_open'),
-     Output('toolbar-toggle-button', 'children')],  # Update button text
-    [Input('toolbar-toggle-button', 'n_clicks')],
-    [State('toolbar-collapse', 'is_open')]
-)
-def toggle_toolbar(n_clicks, is_open):
-    if n_clicks:
-        is_open = not is_open
-    else:
-        is_open = is_open  # Keep the current state if no clicks
-
-    # Update button text based on the collapse state
-    button_text = "Hide View Selector" if is_open else "Show View Selector"
-    return is_open, button_text
-
-@app.callback(
-    [Output('date-dropdown', 'options'),
-     Output('date-dropdown', 'value')],
-    [Input('data-store', 'data')]
-)
-def update_date_dropdown(data):
-    if not data:
-        logging.error("Data is empty or None.")
-        return [], None
-
-    df = pd.DataFrame(data)
-    if 'Date' not in df.columns:
-        logging.error("Date column is missing in the data.")
-        return [], None
-
-    date_options = [{'label': date, 'value': date} for date in df['Date'].unique()]
-    return date_options, date_options[0]['value'] if date_options else None
+            return dash.no_update, date_options, selected_date, dash.no_update
 
 if __name__ == '__main__':
     app.run(debug=True)

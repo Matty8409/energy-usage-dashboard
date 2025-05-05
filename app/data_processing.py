@@ -48,7 +48,7 @@ def process_uploaded_file(contents, filename, existing_data):
         if filename.endswith('.xlsx'):
             df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
             date_key = os.path.basename(filename).split('_')[0] if '_' in filename else 'Unknown'
-            df_new['Date'] = date_key
+            df_new['Date'] = pd.to_datetime(date_key)
             if existing_data is None:
                 df_combined = df_new
             else:
@@ -77,7 +77,7 @@ def load_initial_csv_data(path=UPLOAD_FOLDER):
         try:
             date_key = os.path.basename(filename).split('_')[0]
             df = pd.read_excel(filename, engine='openpyxl')
-            df['Date'] = date_key
+            df['Date'] = pd.to_datetime(date_key)
             combined_data.append(df)
         except Exception as e:
             logging.error(f"Error processing file {filename}: {e}")
