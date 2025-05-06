@@ -161,11 +161,18 @@ def get_save_data_collection_layout():
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("View or Save Processed Data", className="card-title"),
-                        dbc.Button("Download Saved Data", id="download-button", color="success",
+                        html.H4("Download Options", className="card-title"),
+                        dcc.Dropdown(
+                            id="group-selection-dropdown",
+                            placeholder="Select a group or ungrouped data",
+                            className="mb-3"
+                        ),
+                        dbc.Button("Download Selected Group", id="download-button", color="success",
                                    className="w-100 mb-3"),
                         dcc.Download(id="download-component"),
-                        html.H5("Saved Entries Summary", className="mt-4"),
+                        html.H5("Group Summary", className="mt-4"),
+                        html.Div(id="group-summary", className="mt-3 text-muted"),
+                        html.H5("Saved Summary Stats", className="mt-4"),
                         html.Div(id="saved-summary-stats", className="mt-3 text-muted"),
                     ])
                 ], className="mb-4"),
@@ -174,7 +181,7 @@ def get_save_data_collection_layout():
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Preview of Data to Be Saved", className="card-title"),
+                        html.H4("Preview of Data saved", className="card-title"),
                         dash_table.DataTable(
                             id='saved-data-table',
                             columns=[

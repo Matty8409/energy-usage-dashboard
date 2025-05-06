@@ -68,52 +68,45 @@ def register_save_data_callbacks(app):
 
     @app.callback(
         Output("download-component", "data"),
-        Input("download-button", "n_clicks"),
-        State("saved-data-store", "data"),
+        [Input("download-button", "n_clicks")],
+        [State("group-selection-dropdown", "value"),
+         State("saved-data-store", "data")],
         prevent_initial_call=True
     )
-    def download_data(n_clicks, saved_data):
-        if not saved_data:
+    def download_data(n_clicks, selected_group, saved_data):
+        if not saved_data or not selected_group:
             return None
 
         try:
-            # Group data by group name
-            grouped_data = {}
-            for entry in saved_data:
-                group_name = entry['group_name']
-                if group_name not in grouped_data:
-                    grouped_data[group_name] = []
-                grouped_data[group_name].append(entry)
+            # Filter data by selected group
+            filtered_data = [entry for entry in saved_data if entry['group_name'] == selected_group]
 
-            # Create a dictionary to hold data for each group
-            files = {}
-            for group_name, entries in grouped_data.items():
-                df_list = []
-                for entry in entries:
-                    # Ensure `values` is a valid list of dictionaries
-                    if isinstance(entry['values'], list):
-                        df = pd.DataFrame(entry['values'])
-                        df['Date'] = entry['date']
-                        df['Label'] = entry.get('input', '')
-                        df['Saved At'] = entry['datetime']
-                        df_list.append(df)
-                    else:
-                        logging.error(f"Invalid data format in entry: {entry}")
-                        continue
-                if df_list:
-                    group_df = pd.concat(df_list, ignore_index=True)
-                    files[group_name] = group_df
+            if not filtered_data:
+                return None
+
+            # Create a DataFrame for the selected group
+            df_list = []
+            for entry in filtered_data:
+                if isinstance(entry['values'], list):
+                    df = pd.DataFrame(entry['values'])
+                    df['Date'] = entry['date']
+                    df['Label'] = entry.get('input', '')
+                    df['Saved At'] = entry['datetime']
+                    df_list.append(df)
+
+            if not df_list:
+                return None
+
+            group_df = pd.concat(df_list, ignore_index=True)
 
             # Write the Excel file to a BytesIO buffer
             from io import BytesIO
             buffer = BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                for group_name, data in files.items():
-                    data.to_excel(writer, sheet_name=group_name[:31], index=False)  # Limit sheet name to 31 characters
+                group_df.to_excel(writer, sheet_name=selected_group[:31], index=False)
             buffer.seek(0)
 
-            # Use the first group name as the filename
-            filename = f"{list(files.keys())[0]}.xlsx"
+            filename = f"{selected_group}.xlsx"
             return dcc.send_bytes(buffer.getvalue(), filename)
 
         except Exception as e:
@@ -174,3 +167,48 @@ def register_save_data_callbacks(app):
         if n_clicks:
             return not is_open
         return is_open
+
+    @app.callback(
+        [Output("group-selection-dropdown", "options"),
+         Output("group-summary", "children")],
+        [Input("saved-data-store", "data")]
+    )
+    def update_group_options(saved_data):
+        if not saved_data:
+            return [], "No data saved yet."
+
+        try:
+            # Get unique group names
+            group_names = {entry['group_name'] for entry in saved_data}
+            options = [{'label': group, 'value': group} for group in group_names]
+
+            # Generate group summary
+            summary = []
+            for group in group_names:
+                count = sum(1 for entry in saved_data if entry['group_name'] == group)
+                summary.append(f"{group}: {count} entries")
+
+            return options, html.Ul([html.Li(item) for item in summary])
+
+        except Exception as e:
+            logging.error(f"Error updating group options: {e}")
+            return [], "Error generating group summary."
+
+    @app.callback(
+        Output("group-name-input", "options"),
+        Input("saved-data-store", "data"),
+        State("group-name-input", "value")
+    )
+    def update_group_name_options(saved_data, current_value):
+        if not saved_data:
+            saved_data = []
+
+        # Extract unique group names
+        group_names = {entry['group_name'] for entry in saved_data}
+        options = [{'label': group, 'value': group} for group in group_names]
+
+        # Add the current value if it's not in the options
+        if current_value and current_value not in group_names:
+            options.append({'label': current_value, 'value': current_value})
+
+        return options
