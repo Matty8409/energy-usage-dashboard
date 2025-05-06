@@ -194,21 +194,4 @@ def register_save_data_callbacks(app):
             logging.error(f"Error updating group options: {e}")
             return [], "Error generating group summary."
 
-    @app.callback(
-        Output("group-name-input", "options"),
-        Input("saved-data-store", "data"),
-        State("group-name-input", "value")
-    )
-    def update_group_name_options(saved_data, current_value):
-        if not saved_data:
-            saved_data = []
 
-        # Extract unique group names
-        group_names = {entry['group_name'] for entry in saved_data}
-        options = [{'label': group, 'value': group} for group in group_names]
-
-        # Add the current value if it's not in the options
-        if current_value and current_value not in group_names:
-            options.append({'label': current_value, 'value': current_value})
-
-        return options

@@ -8,57 +8,91 @@ def get_dashboard_layout():
     initial_df = load_initial_csv_data()
     initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
-    dashboard_layout = html.Div(id='theme-wrapper', children=[
-        html.H1('Energy Usage Dashboard', className='header-title'),
-        dbc.Button(
-            "Show/Hide View Selector",  # Button text
-            id="toolbar-toggle-button",  # Button ID
-            color="primary",  # Button color
-            className="mb-3",  # Add margin below the button
-            n_clicks=0  # Initialize click count
-        ),
+    dashboard_layout = dbc.Container(fluid=True, children=[
+        dbc.Row([
+            dbc.Col(html.H1('Energy Usage Dashboard'), className='mb-4 mt-4 text-center')
+        ]),
+
+        dbc.Row([
+            dbc.Col(dbc.Button(
+                "Show/Hide View Selector",
+                id="toolbar-toggle-button",
+                color="primary",
+                className="mb-3"
+            ), width=12, className="text-center")
+        ]),
+
         dbc.Collapse(
             id='toolbar-collapse',
-            is_open=True,  # Initially collapsed
+            is_open=False,
             children=[
-                html.Div(id='toolbar', className='toolbar', children=[
-                    dcc.RadioItems(
-                        id='view-type-radio',
-                        options=[
-                            {'label': 'Table View ', 'value': 'table'},
-                            {'label': 'Line Graph View ', 'value': 'graph'},
-                            {'label': 'Heat map ', 'value': 'heatmap'}
-                        ],
-                        value='table',
-                        labelStyle={'display': 'inline-block'}
-                    ),
+                dbc.Row([
+                    dbc.Col([
+                        dcc.RadioItems(
+                            id='view-type-radio',
+                            options=[
+                                {'label': 'Table View', 'value': 'table'},
+                                {'label': 'Line Graph View', 'value': 'graph'},
+                                {'label': 'Heatmap', 'value': 'heatmap'}
+                            ],
+                            value='table',
+                            labelStyle={'display': 'inline-block', 'marginRight': '10px'}
+                        )
+                    ], width=12, className="text-center")
                 ])
-        ]
-        ),
-        dcc.Dropdown(
-            id='energy-type-dropdown',
-            options=energy_meter_options,
-            value='all',
-            className='energy-type-dropdown'
-        ),
-        html.Div(
-            id='output-wrapper',
-            children=[
-                dcc.Loading(
-                    id='loading-output',
-                    type='default',  # spinner type (optional)
-                    children=html.Div(id='output-container')
-                )
             ]
         ),
-        dcc.Dropdown(id='date-dropdown',
-                     className='date-select-dropdown',
-                     placeholder='Select a date'),
-        dcc.Upload(id='add-file', children=html.Button("Upload File or ZIP Folder", className="me-1 mt-1 btn btn-primary"), multiple=True),
+
+        dbc.Row([
+            dbc.Col([
+                dcc.Dropdown(
+                    id='energy-type-dropdown',
+                    options=energy_meter_options,
+                    value='all',
+                    placeholder='Select energy type',
+                    className='mb-3',
+                    style={'width': '300px'}  # Adjust width
+                ),
+                dcc.Dropdown(
+                    id='date-dropdown',
+                    placeholder='Select a date',
+                    className='mb-3',
+                    style={'width': '300px'}  # Adjust width
+                )
+            ], width=6, className='d-flex justify-content-center')  # Center the column
+        ], className='d-flex justify-content-center mb-3'),
+
+        dbc.Row([
+            dbc.Col(dcc.Loading(
+                id='loading-output',
+                type='default',
+                children=html.Div(id='output-container')
+            ), width=12)
+        ]),
+
         dcc.Store(id='data-store', data=initial_df.to_dict('records')),
-        dcc.Link(html.Button('Go to Statistics', className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),href='/statistics')
+
+        dbc.Row([
+            dbc.Col(dcc.Upload(
+                id='add-file',
+                children=dbc.Button("Upload File or ZIP Folder", color="primary"),
+                multiple=True
+            ), width={"size": 6, "offset": 3}, className='mb-4 text-center')
+        ]),
+
+        # Navigation Buttons
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    dcc.Link(dbc.Button("Go to Statistics", color="info", className="me-2"), href='/statistics'),
+                    dcc.Link(dbc.Button("Save Data Collection", color="success"), href='/save-data-collection')
+                ], className='d-flex justify-content-center')
+            ], width=12)
+        ], className='mt-4 mb-4')
     ])
+
     return dashboard_layout
+
 
 def get_login_layout():
     login_layout = dbc.Container([
@@ -112,7 +146,10 @@ def get_statistics_layout():
             className='statistics-energy-type-dropdown'
         ),
         html.Div(id='statistics-output', className='statistics-container'),
-        dcc.Link(html.Button('Go to Dashboard', className='me-1 mt-1 btn btn-primary', style={'marginTop': '10px'}),href='/dashboard')
+        html.Div([
+            dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
+            dcc.Link(dbc.Button("Go to Save Data Collection", color="success"), href='/save-data-collection')
+        ], className='d-flex justify-content-center mt-4')
     ])
     return statistics_layout
 
@@ -246,7 +283,15 @@ def get_save_data_collection_layout():
                         }
                     )
                 ]
-            )
+            ),
+            dbc.Row([
+                dbc.Col([
+                    html.Div([
+                        dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
+                        dcc.Link(dbc.Button("Go to Statistics", color="success"), href='/statistics')
+                    ], className='d-flex justify-content-center')
+                ], width=12)
+            ], className='mt-4 mb-4')
         ])
     ])
 
