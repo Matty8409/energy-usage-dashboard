@@ -119,12 +119,15 @@ def get_save_data_collection_layout():
     save_data_collection_layout = html.Div(id='theme-wrapper', children=[
         html.H2("Save and Collect Data", style={'textAlign': 'center'}),
         dcc.Input(id='data-input', type='text', placeholder='Enter data', style={'margin': '10px'}),
-
+        html.P("Enter a custom label or identifier for this data entry (optional)."),
+        html.P("Select the type of energy and date you want to save."),
         dcc.Dropdown(
             id='energy-type-dropdown',
             options=energy_meter_options,
             value='all',  # Default value
-            style={'margin': '10px'}
+            style={'margin': '10px',
+                'height': '36px',
+                'width': '160px'},
         ),
         dcc.Dropdown(id='date-dropdown',
                      className='date-select-dropdown',
@@ -132,7 +135,8 @@ def get_save_data_collection_layout():
         html.Button('Save Data', id='save-data-button', n_clicks=0, style={'margin': '10px'}),
         html.Div(id='save-data-message', style={'color': 'green', 'marginTop': '10px'}),
         html.Hr(),
-        html.H3("Saved Data", style={'textAlign': 'center'}),
+        html.Div(id='filtered-data-preview'),
+        html.H3("View or Save Processed Data", style={'textAlign': 'center'}),
         html.Div(id='saved-data-display'),
         dcc.Store(id='saved-data-store', data=[]),  # Store to hold saved data
         dcc.Store(id='data-store', data=initial_df.to_dict('records')),
@@ -145,6 +149,27 @@ def get_save_data_collection_layout():
             value='table',
             labelStyle={'display': 'inline-block'}
         ),
+        html.Button("Download Saved Data", id="download-button", style={'margin': '10px'}),
+        dcc.Download(id="download-component"),
+        html.H4("Saved Entries Summary", style={'marginTop': '20px'}),
+        html.Ul(id='save-summary-list'),
+        html.Div([
+            dash_table.DataTable(
+                id='saved-data-table',
+                columns=[
+                    {'name': 'Energy Type', 'id': 'energy_type'},
+                    {'name': 'Date', 'id': 'date'},
+                    {'name': 'Label', 'id': 'input'},
+                    {'name': 'Saved At', 'id': 'datetime'},
+                    {'name': 'Time', 'id': 'Time'},
+                    {'name': 'Value', 'id': 'value'}
+                ],
+                data=[],  # Will be filled by callback
+                page_size=10,
+                style_table={'overflowX': 'auto'},
+                style_cell={'textAlign': 'left'}
+            )
+        ]),
         html.Div(id='output-container'),  # Ensure this is included
     ])
     return save_data_collection_layout

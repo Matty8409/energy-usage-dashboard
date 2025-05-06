@@ -137,6 +137,8 @@ html, body, #_dash-app-content, #theme-wrapper {
 .energy-type-dropdown {
     display: flex;
     min-width: 160px;
+    height: 36px;
+    width: 160px;
 }
 
 .date-select-dropdown {
