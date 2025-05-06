@@ -4,64 +4,67 @@ import pandas as pd
 import logging
 from dash import Input, Output, State, html, dash_table, dcc
 
+from app.config import energy_type_mapping
+
+
 def register_save_data_callbacks(app):
     @app.callback(
         [Output('saved-data-store', 'data'),
          Output('save-data-message', 'children'),
-         Output('saved-data-display', 'children'),
-         Output('filtered-data-preview', 'children')],
+         Output('saved-data-table', 'data')],
         [Input('save-data-button', 'n_clicks')],
         [State('data-store', 'data'),
          State('energy-type-dropdown', 'value'),
          State('date-dropdown', 'value'),
          State('data-input', 'value'),
+         State('group-name-input', 'value'),
          State('saved-data-store', 'data')]
     )
-    def save_data(n_clicks, data, selected_energy_type, selected_date, user_input, saved_data):
+    def save_data(n_clicks, data, selected_energy_type, selected_date, user_input, group_name, saved_data):
         if saved_data is None:
             saved_data = []
 
         if not selected_energy_type or not selected_date:
-            return saved_data, "Please select both energy type and date.", html.Ul([]), None
-
-        if any(d['energy_type'] == selected_energy_type and d['date'] == selected_date for d in saved_data):
-            return saved_data, "This combination has already been saved.", html.Ul([]), None
+            return saved_data, "Please select energy type and date.", saved_data
 
         if n_clicks > 0:
             if not data:
-                return saved_data, "No data available to save.", html.Ul([]), None
+                return saved_data, "No data available to save.", saved_data
 
             try:
                 df = pd.DataFrame(data)
                 filtered_df = df[(df['Date'] == selected_date)][['Time', selected_energy_type]]
-                table = dash_table.DataTable(
-                    columns=[{"name": i, "id": i} for i in filtered_df.columns],
-                    data=filtered_df.to_dict('records'),
-                    style_table={'overflowX': 'auto'},
-                    style_cell={'textAlign': 'left'}
-                )
 
                 new_data = {
-                    'energy_type': selected_energy_type,
+                    'energy_type': energy_type_mapping.get(selected_energy_type, selected_energy_type),
                     'date': selected_date,
-                    'input': user_input,
-                    'values': filtered_df.to_dict('records'),
+                    'input': user_input or "N/A",
+                    'group_name': group_name or "Ungrouped",
+                    'values': filtered_df.to_dict('records'),  # Store actual data
                     'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 saved_data.append(new_data)
 
-                saved_data_display = html.Ul(
-                    [html.Li(f"Energy Type: {data['energy_type']}, Date: {data['date']}") for data in saved_data]
-                )
-                return saved_data, "Data saved successfully!", saved_data_display, table
+                # Flatten data for the DataTable
+                table_data = [
+                    {
+                        'energy_type': entry['energy_type'],
+                        'date': entry['date'],
+                        'input': entry.get('input', ''),
+                        'group_name': entry['group_name'],
+                        'datetime': entry['datetime'],
+                        'summary': f"{len(entry['values'])} records saved"  # Use record count for summary
+                    }
+                    for entry in saved_data
+                ]
+
+                return saved_data, "Data saved successfully!", table_data
 
             except Exception as e:
                 logging.error(f"Error processing data: {e}")
-                return saved_data, "An error occurred while saving data.", html.Ul([]), None
+                return saved_data, "An error occurred while saving data.", saved_data
 
-        return saved_data, "", html.Ul(
-            [html.Li(f"Energy Type: {data['energy_type']}, Date: {data['date']}") for data in saved_data]
-        ), None
+        return saved_data, "", saved_data
 
     @app.callback(
         Output("download-component", "data"),
@@ -72,16 +75,102 @@ def register_save_data_callbacks(app):
     def download_data(n_clicks, saved_data):
         if not saved_data:
             return None
-        flat_records = []
-        for entry in saved_data:
-            for row in entry['values']:
-                row_copy = row.copy()
-                row_copy.update({
-                    'energy_type': entry['energy_type'],
-                    'date': entry['date'],
-                    'input': entry.get('input', ''),
-                    'saved_at': entry['datetime']
-                })
-                flat_records.append(row_copy)
-        df = pd.DataFrame(flat_records)
-        return dcc.send_data_frame(df.to_csv, "saved_data.csv")
+
+        try:
+            # Group data by group name
+            grouped_data = {}
+            for entry in saved_data:
+                group_name = entry['group_name']
+                if group_name not in grouped_data:
+                    grouped_data[group_name] = []
+                grouped_data[group_name].append(entry)
+
+            # Create a dictionary to hold data for each group
+            files = {}
+            for group_name, entries in grouped_data.items():
+                df_list = []
+                for entry in entries:
+                    # Ensure `values` is a valid list of dictionaries
+                    if isinstance(entry['values'], list):
+                        df = pd.DataFrame(entry['values'])
+                        df['Date'] = entry['date']
+                        df['Label'] = entry.get('input', '')
+                        df['Saved At'] = entry['datetime']
+                        df_list.append(df)
+                    else:
+                        logging.error(f"Invalid data format in entry: {entry}")
+                        continue
+                if df_list:
+                    group_df = pd.concat(df_list, ignore_index=True)
+                    files[group_name] = group_df
+
+            # Write the Excel file to a BytesIO buffer
+            from io import BytesIO
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                for group_name, data in files.items():
+                    data.to_excel(writer, sheet_name=group_name[:31], index=False)  # Limit sheet name to 31 characters
+            buffer.seek(0)
+
+            # Use the first group name as the filename
+            filename = f"{list(files.keys())[0]}.xlsx"
+            return dcc.send_bytes(buffer.getvalue(), filename)
+
+        except Exception as e:
+            logging.error(f"Error generating download data: {e}")
+            return None
+
+    # Update the summary stats callback
+    def update_saved_summary_stats(saved_data):
+        if not saved_data:
+            return "No data saved yet."
+
+        try:
+            total_entries = len(saved_data)
+            energy_type_counts = pd.DataFrame(saved_data)['energy_type'].map(
+                lambda x: energy_type_mapping.get(x, x)
+            ).value_counts().to_dict()
+            most_recent_date = max(entry['datetime'] for entry in saved_data)
+
+            stats = [
+                f"Total Entries: {total_entries}",
+                "Energy Type Counts: " + ", ".join(f"{k}: {v}" for k, v in energy_type_counts.items()),
+                f"Most Recent Save: {most_recent_date}"
+            ]
+            return html.Ul([html.Li(stat) for stat in stats])
+        except Exception as e:
+            logging.error(f"Error updating saved summary stats: {e}")
+            return "Error generating statistics."
+
+    @app.callback(
+        Output("saved-summary-stats", "children"),
+        Input("saved-data-store", "data")
+    )
+    def update_saved_summary_stats(saved_data):
+        if not saved_data:
+            return "No data saved yet."
+
+        try:
+            total_entries = len(saved_data)
+            energy_type_counts = pd.DataFrame(saved_data)['energy_type'].value_counts().to_dict()
+            most_recent_date = max(entry['datetime'] for entry in saved_data)
+
+            stats = [
+                f"Total Entries: {total_entries}",
+                "Energy Type Counts: " + ", ".join(f"{k}: {v}" for k, v in energy_type_counts.items()),
+                f"Most Recent Save: {most_recent_date}"
+            ]
+            return html.Ul([html.Li(stat) for stat in stats])
+        except Exception as e:
+            logging.error(f"Error updating saved summary stats: {e}")
+            return "Error generating statistics."
+
+    @app.callback(
+        Output("preview-collapse", "is_open"),
+        [Input("toggle-preview-button", "n_clicks")],
+        [State("preview-collapse", "is_open")]
+    )
+    def toggle_preview(n_clicks, is_open):
+        if n_clicks:
+            return not is_open
+        return is_open

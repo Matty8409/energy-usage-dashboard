@@ -1,5 +1,5 @@
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import html, dcc, dash_table
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
 
@@ -92,8 +92,11 @@ def get_register_layout():
     return register_layout
 
 def get_statistics_layout():
+    initial_df = load_initial_csv_data()
+    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
+
     statistics_layout = html.Div(id='theme-wrapper', children=[
-        dcc.Store(id='data-store'),
+        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
         html.H1("Energy Usage Statistics", className='header-title'),
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
@@ -113,64 +116,131 @@ def get_statistics_layout():
     ])
     return statistics_layout
 
+
 def get_save_data_collection_layout():
     initial_df = load_initial_csv_data()
     initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-    save_data_collection_layout = html.Div(id='theme-wrapper', children=[
-        html.H2("Save and Collect Data", style={'textAlign': 'center'}),
-        dcc.Input(id='data-input', type='text', placeholder='Enter data', style={'margin': '10px'}),
-        html.P("Enter a custom label or identifier for this data entry (optional)."),
-        html.P("Select the type of energy and date you want to save."),
-        dcc.Dropdown(
-            id='energy-type-dropdown',
-            options=energy_meter_options,
-            value='all',  # Default value
-            style={'margin': '10px',
-                'height': '36px',
-                'width': '160px'},
-        ),
-        dcc.Dropdown(id='date-dropdown',
-                     className='date-select-dropdown',
-                     placeholder='Select a date'),
-        html.Button('Save Data', id='save-data-button', n_clicks=0, style={'margin': '10px'}),
-        html.Div(id='save-data-message', style={'color': 'green', 'marginTop': '10px'}),
-        html.Hr(),
-        html.Div(id='filtered-data-preview'),
-        html.H3("View or Save Processed Data", style={'textAlign': 'center'}),
-        html.Div(id='saved-data-display'),
-        dcc.Store(id='saved-data-store', data=[]),  # Store to hold saved data
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
-        dcc.RadioItems(
-            id='view-type-radio',
-            options=[
-                {'label': 'Table View', 'value': 'table'},
-                {'label': 'Line Graph View', 'value': 'graph'}
-            ],
-            value='table',
-            labelStyle={'display': 'inline-block'}
-        ),
-        html.Button("Download Saved Data", id="download-button", style={'margin': '10px'}),
-        dcc.Download(id="download-component"),
-        html.H4("Saved Entries Summary", style={'marginTop': '20px'}),
-        html.Ul(id='save-summary-list'),
-        html.Div([
-            dash_table.DataTable(
-                id='saved-data-table',
-                columns=[
-                    {'name': 'Energy Type', 'id': 'energy_type'},
-                    {'name': 'Date', 'id': 'date'},
-                    {'name': 'Label', 'id': 'input'},
-                    {'name': 'Saved At', 'id': 'datetime'},
-                    {'name': 'Time', 'id': 'Time'},
-                    {'name': 'Value', 'id': 'value'}
-                ],
-                data=[],  # Will be filled by callback
-                page_size=10,
-                style_table={'overflowX': 'auto'},
-                style_cell={'textAlign': 'left'}
-            )
-        ]),
-        html.Div(id='output-container'),  # Ensure this is included
-    ])
-    return save_data_collection_layout
 
+    save_data_collection_layout = dbc.Container(fluid=True, children=[
+        html.H2("Save and Collect Data", className="text-center my-4"),
+
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4("Enter Data", className="card-title"),
+                        dbc.Input(id='data-input', type='text', placeholder='Enter data', className='mb-3'),
+                        html.P("Enter a custom label or identifier for this data entry (optional).",
+                               className="text-muted"),
+                        html.P("Select the type of energy and date you want to save.", className="text-muted"),
+                        dbc.Row([
+                            dbc.Col([
+                                dcc.Dropdown(
+                                    id='energy-type-dropdown',
+                                    options=energy_meter_options,
+                                    value='all',
+                                    placeholder="Select Energy Type",
+                                    className='mb-3'
+                                )
+                            ], width=6),
+                            dbc.Col([
+                                dcc.Dropdown(
+                                    id='date-dropdown',
+                                    placeholder='Select a date',
+                                    className='mb-3'
+                                )
+                            ], width=6),
+                        ]),
+                        dbc.Input(id='group-name-input', type='text', placeholder='Enter group name', className='mb-3'),
+                        dbc.Button('Save Data', id='save-data-button', color='primary', className='w-100'),
+                        html.Div(id='save-data-message', className='text-success mt-3'),
+                    ])
+                ], className="mb-4"),
+            ], width=4),
+
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4("View or Save Processed Data", className="card-title"),
+                        dbc.Button("Download Saved Data", id="download-button", color="success",
+                                   className="w-100 mb-3"),
+                        dcc.Download(id="download-component"),
+                        html.H5("Saved Entries Summary", className="mt-4"),
+                        html.Div(id="saved-summary-stats", className="mt-3 text-muted"),
+                    ])
+                ], className="mb-4"),
+            ], width=4),
+
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4("Preview of Data to Be Saved", className="card-title"),
+                        dash_table.DataTable(
+                            id='saved-data-table',
+                            columns=[
+                                {'name': 'Energy Type', 'id': 'energy_type'},
+                                {'name': 'Date', 'id': 'date'},
+                                {'name': 'Label', 'id': 'input'},
+                                {'name': 'Saved At', 'id': 'datetime'},
+                                {'name': 'Summary', 'id': 'summary'}
+                            ],
+                            data=[],  # Will be populated by the callback
+                            page_size=10,
+                            style_table={'overflowX': 'auto'},
+                            style_cell={'textAlign': 'left', 'padding': '10px'},
+                            style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'}
+                        )
+                    ])
+                ], className="mb-4"),
+            ], width=4),
+        ]),
+
+        dcc.Store(id='saved-data-store', data=[]),
+        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
+        html.H4("Preview Section", className="text-muted mt-4"),
+        html.P(
+            "This section allows you to preview the data based on your current selections for date and energy type. "
+            "Click the button below to show or hide the preview.",
+            className="text-muted"
+        ),
+        html.Div([
+            dbc.Button(
+                "Show Preview",  # Default button text
+                id="toggle-preview-button",
+                color="primary",
+                className="mb-3",
+                n_clicks=0
+            ),
+            dbc.Tooltip(
+                "Click to toggle the preview of your selected data.",
+                target="toggle-preview-button"
+            ),
+            dbc.Collapse(
+                id="preview-collapse",
+                is_open=False,  # Initially hidden
+                children=[
+                    dcc.RadioItems(
+                        id='view-type-radio',
+                        options=[
+                            {'label': 'Table View', 'value': 'table'},
+                            {'label': 'Line Graph View', 'value': 'graph'}
+                        ],
+                        value='table',
+                        labelStyle={'display': 'inline-block'},
+                        className="mb-3"
+                    ),
+                    html.Div(
+                        id='output-container',
+                        style={
+                            'border': '1px solid #ccc',
+                            'padding': '10px',
+                            'borderRadius': '5px',
+                            'backgroundColor': '#f9f9f9'
+                        }
+                    )
+                ]
+            )
+        ])
+    ])
+
+    return save_data_collection_layout

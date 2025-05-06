@@ -66,8 +66,6 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     get_save_data_collection_layout()
 ])
 
-
-
 @app.callback(
     Output('data-store', 'data'),
     [Input('add-file', 'contents')],
