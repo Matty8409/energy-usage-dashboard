@@ -205,6 +205,35 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
             logging.error(f"Error creating table view: {e}")
             return dash.no_update, date_options, selected_date, dash.no_update
 
+    if view_type == 'heatmap':
+        try:
+            # Default to "Electricity" for heatmap if "all" is selected
+            if selected_energy_type == 'all':
+                selected_energy_type = 'TH-E-01 kWh (kWh) [DELTA] 1'
+
+            energy_column_for_heatmap = selected_energy_type
+
+            # Get the readable name for display
+            readable_energy_type = energy_type_mapping.get(energy_column_for_heatmap, energy_column_for_heatmap)
+
+            if energy_column_for_heatmap in df_filtered.columns:
+                df_filtered_heatmap = df_filtered.pivot(index='Time', columns='Date', values=energy_column_for_heatmap)
+
+                fig = px.imshow(
+                    df_filtered_heatmap,
+                    labels=dict(x="Date", y="Time", color=readable_energy_type),
+                    title=f"Heatmap for {readable_energy_type}"
+                )
+                return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+            else:
+                logging.error(f"Selected energy type '{selected_energy_type}' not found in the filtered data.")
+                return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+        except Exception as e:
+            logging.error(f"Error creating heatmap view: {e}")
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+
     elif view_type == 'graph':
         try:
             df_melted = df_filtered.melt(

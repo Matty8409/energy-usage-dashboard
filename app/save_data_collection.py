@@ -38,20 +38,36 @@ def register_save_data_callbacks(app):
                     if (entry['energy_type'] == energy_type_mapping.get(selected_energy_type, selected_energy_type) and
                             entry['date'] == selected_date and
                             entry['group_name'] == (group_name or "Ungrouped")):
-                        # Generate table data without nested `values`
-                        table_data = [
-                            {
-                                'energy_type': entry['energy_type'],
-                                'date': entry['date'],
-                                'input': entry.get('input', ''),
-                                'group_name': entry['group_name'],
-                                'datetime': entry['datetime'],
-                                'summary': f"{len(entry['values'])} records saved"
-                            }
-                            for entry in saved_data
-                        ]
-                        return saved_data, "This data already exists in the collection.", table_data
 
+                        # Group entries by group_name
+                        from collections import defaultdict
+                        grouped_entries = defaultdict(list)
+                        for entry in saved_data:
+                            grouped_entries[entry['group_name']].append(entry)
+
+                        table_data = []
+                        for group, entries in grouped_entries.items():
+                            # Add a group header row
+                            table_data.append({
+                                'energy_type': '',
+                                'date': '',
+                                'input': '',
+                                'group_name': f"--- {group} ---",
+                                'datetime': '',
+                                'summary': ''
+                            })
+                            for entry in entries:
+                                table_data.append({
+                                    'energy_type': entry['energy_type'],
+                                    'date': entry['date'],
+                                    'input': entry.get('input', ''),
+                                    'group_name': entry['group_name'],
+                                    'datetime': entry['datetime'],
+                                    'summary': f"{len(entry['values'])} records saved"
+                                })
+
+                        return saved_data, html.Span("This data already exists in the collection.",
+                                                     style={"color": "red"}), table_data
                 # Save new data
                 df = pd.DataFrame(data)
                 filtered_df = df[(df['Date'] == selected_date)][['Time', selected_energy_type]]
@@ -67,17 +83,35 @@ def register_save_data_callbacks(app):
                 saved_data.append(new_data)
 
                 # Flatten data for the DataTable
-                table_data = [
-                    {
-                        'energy_type': entry['energy_type'],
-                        'date': entry['date'],
-                        'input': entry.get('input', ''),
-                        'group_name': entry['group_name'],
-                        'datetime': entry['datetime'],
-                        'summary': f"{len(entry['values'])} records saved"
-                    }
-                    for entry in saved_data
-                ]
+                from collections import defaultdict
+
+                # Group entries by group_name
+                grouped_entries = defaultdict(list)
+                for entry in saved_data:
+                    grouped_entries[entry['group_name']].append(entry)
+
+                table_data = []
+                for group, entries in grouped_entries.items():
+                    # Add a group header row
+                    table_data.append({
+                        'group_name': f"--- {group} ---",
+                        'energy_type': '',
+                        'date': '',
+                        'input': '',
+                        'datetime': '',
+                        'summary': ''
+                    })
+
+                    # Add entries without repeating the group name
+                    for entry in entries:
+                        table_data.append({
+                            'group_name': '',  # Empty so it's only shown in the header row
+                            'energy_type': entry['energy_type'],
+                            'date': entry['date'],
+                            'input': entry.get('input', ''),
+                            'datetime': entry['datetime'],
+                            'summary': f"{len(entry['values'])} records saved"
+                        })
 
                 return saved_data, "Data saved successfully!", table_data
 

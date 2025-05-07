@@ -84,8 +84,8 @@ def get_dashboard_layout():
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    dcc.Link(dbc.Button("Go to Statistics", color="info", className="me-2"), href='/statistics'),
-                    dcc.Link(dbc.Button("Save Data Collection", color="success"), href='/save-data-collection')
+                    dcc.Link(dbc.Button("Statistics", color="info", className="me-2"), href='/statistics'),
+                    dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
                 ], className='d-flex justify-content-center')
             ], width=12)
         ], className='mt-4 mb-4')
@@ -148,7 +148,7 @@ def get_statistics_layout():
         html.Div(id='statistics-output', className='statistics-container'),
         html.Div([
             dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
-            dcc.Link(dbc.Button("Go to Save Data Collection", color="success"), href='/save-data-collection')
+            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
         ], className='d-flex justify-content-center mt-4')
     ])
     return statistics_layout
@@ -231,18 +231,29 @@ def get_save_data_collection_layout():
                         dash_table.DataTable(
                             id='saved-data-table',
                             columns=[
-                                {'name': 'Energy Type', 'id': 'energy_type'},
-                                {'name': 'Date', 'id': 'date'},
-                                {'name': 'Label', 'id': 'input'},
-                                {'name': 'Saved At', 'id': 'datetime'},
-                                {'name': 'Summary', 'id': 'summary'}
+                                {"name": "Group", "id": "group_name"},
+                                {"name": "Energy Type", "id": "energy_type"},
+                                {"name": "Date", "id": "date"},
+                                {"name": "Input", "id": "input"},
+                                {"name": "Saved At", "id": "datetime"},
+                                {"name": "Summary", "id": "summary"},
                             ],
-                            data=[],  # Will be populated by the callback
-                            page_size=10,
+                            style_cell={
+                                'fontFamily': 'monospace',
+                                'whiteSpace': 'normal',
+                                'textAlign': 'left',
+                            },
+                            style_data_conditional=[
+                                {
+                                    'if': {'filter_query': '{energy_type} = ""'},
+                                    'backgroundColor': '#f0f0f0',
+                                    'fontWeight': 'bold',
+                                    'fontStyle': 'italic'
+                                }
+                            ],
                             style_table={'overflowX': 'auto'},
-                            style_cell={'textAlign': 'left', 'padding': '10px'},
-                            style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'}
                         )
+
                     ])
                 ], className="mb-4"),
             ], width=4),
@@ -296,8 +307,8 @@ def get_save_data_collection_layout():
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
-                        dcc.Link(dbc.Button("Go to Statistics", color="success"), href='/statistics')
+                        dcc.Link(dbc.Button("Dashboard", color="info", className="me-2"), href='/dashboard'),
+                        dcc.Link(dbc.Button("Statistics", color="success"), href='/statistics')
                     ], className='d-flex justify-content-center')
                 ], width=12)
             ], className='mt-4 mb-4')
