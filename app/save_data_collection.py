@@ -1,5 +1,6 @@
 # app/save_data_collection.py
 from datetime import datetime
+from io import BytesIO
 import pandas as pd
 import logging
 from dash import Input, Output, State, html, dash_table, dcc
@@ -32,6 +33,26 @@ def register_save_data_callbacks(app):
                 return saved_data, "No data available to save.", saved_data
 
             try:
+                # Check for duplicates
+                for entry in saved_data:
+                    if (entry['energy_type'] == energy_type_mapping.get(selected_energy_type, selected_energy_type) and
+                            entry['date'] == selected_date and
+                            entry['group_name'] == (group_name or "Ungrouped")):
+                        # Generate table data without nested `values`
+                        table_data = [
+                            {
+                                'energy_type': entry['energy_type'],
+                                'date': entry['date'],
+                                'input': entry.get('input', ''),
+                                'group_name': entry['group_name'],
+                                'datetime': entry['datetime'],
+                                'summary': f"{len(entry['values'])} records saved"
+                            }
+                            for entry in saved_data
+                        ]
+                        return saved_data, "This data already exists in the collection.", table_data
+
+                # Save new data
                 df = pd.DataFrame(data)
                 filtered_df = df[(df['Date'] == selected_date)][['Time', selected_energy_type]]
 
@@ -40,7 +61,7 @@ def register_save_data_callbacks(app):
                     'date': selected_date,
                     'input': user_input or "N/A",
                     'group_name': group_name or "Ungrouped",
-                    'values': filtered_df.to_dict('records'),  # Store actual data
+                    'values': filtered_df.to_dict('records'),
                     'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 saved_data.append(new_data)
@@ -53,7 +74,7 @@ def register_save_data_callbacks(app):
                         'input': entry.get('input', ''),
                         'group_name': entry['group_name'],
                         'datetime': entry['datetime'],
-                        'summary': f"{len(entry['values'])} records saved"  # Use record count for summary
+                        'summary': f"{len(entry['values'])} records saved"
                     }
                     for entry in saved_data
                 ]
@@ -84,26 +105,26 @@ def register_save_data_callbacks(app):
             if not filtered_data:
                 return None
 
-            # Create a DataFrame for the selected group
-            df_list = []
+            # Create a DataFrame for each energy type
+            energy_type_dfs = {}
             for entry in filtered_data:
                 if isinstance(entry['values'], list):
                     df = pd.DataFrame(entry['values'])
                     df['Date'] = entry['date']
                     df['Label'] = entry.get('input', '')
                     df['Saved At'] = entry['datetime']
-                    df_list.append(df)
+                    energy_type = entry['energy_type']
+                    if energy_type not in energy_type_dfs:
+                        energy_type_dfs[energy_type] = []
+                    energy_type_dfs[energy_type].append(df)
 
-            if not df_list:
-                return None
-
-            group_df = pd.concat(df_list, ignore_index=True)
-
-            # Write the Excel file to a BytesIO buffer
-            from io import BytesIO
+            # Combine data for each energy type into separate sheets
             buffer = BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                group_df.to_excel(writer, sheet_name=selected_group[:31], index=False)
+                for energy_type, dfs in energy_type_dfs.items():
+                    combined_df = pd.concat(dfs, ignore_index=True)
+                    sheet_name = energy_type[:31]  # Excel sheet names are limited to 31 characters
+                    combined_df.to_excel(writer, sheet_name=sheet_name, index=False)
             buffer.seek(0)
 
             filename = f"{selected_group}.xlsx"

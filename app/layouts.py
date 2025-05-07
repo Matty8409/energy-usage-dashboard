@@ -166,9 +166,13 @@ def get_save_data_collection_layout():
                 dbc.Card([
                     dbc.CardBody([
                         html.H4("Enter Data", className="card-title"),
-                        dbc.Input(id='data-input', type='text', placeholder='Enter data', className='mb-3'),
-                        html.P("Enter a custom label or identifier for this data entry (optional).",
-                               className="text-muted"),
+                        dbc.Input(
+                            id='data-input',
+                            type='text',
+                            placeholder='Do you want to add a note to this set of data?',
+                            className='mb-3'
+                        ),
+                        html.P("Add a note or description for this data entry (optional).", className="text-muted"),
                         html.P("Select the type of energy and date you want to save.", className="text-muted"),
                         dbc.Row([
                             dbc.Col([
@@ -188,7 +192,12 @@ def get_save_data_collection_layout():
                                 )
                             ], width=6),
                         ]),
-                        dbc.Input(id='group-name-input', type='text', placeholder='Enter group name', className='mb-3'),
+                        dbc.Input(
+                            id='group-name-input',
+                            type='text',
+                            placeholder='Enter a group name (optional)',
+                            className='mb-3'
+                        ),
                         dbc.Button('Save Data', id='save-data-button', color='primary', className='w-100'),
                         html.Div(id='save-data-message', className='text-success mt-3'),
                     ])
@@ -218,7 +227,7 @@ def get_save_data_collection_layout():
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Preview of Data saved", className="card-title"),
+                        html.H4("Preview of Data Saved", className="card-title"),
                         dash_table.DataTable(
                             id='saved-data-table',
                             columns=[
