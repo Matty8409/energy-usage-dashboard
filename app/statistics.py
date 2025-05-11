@@ -2,9 +2,11 @@ from dash import html, dcc
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objects as go
-
 from app.data_processing import get_processed_data
+from app.config import energy_meter_options
 
+# Create a mapping from value to label
+value_to_label = {option['value']: option['label'] for option in energy_meter_options}
 
 def register_statistics_callbacks(app):
     @app.callback(
@@ -44,7 +46,7 @@ def register_statistics_callbacks(app):
                     x=highest_day_data['Time'],
                     y=highest_day_data[col],
                     mode='lines+markers',
-                    name=f'{col} Usage'
+                    name=f'{value_to_label.get(col, col)} Usage'
                 ))
 
                 # Highlight the maximum point
@@ -57,15 +59,15 @@ def register_statistics_callbacks(app):
                 ))
 
                 fig.update_layout(
-                    title=f'{col} Usage on {highest_day}',
+                    title=f'{value_to_label.get(col, col)} Usage on {highest_day}',
                     xaxis_title='Time',
-                    yaxis_title=f'{col} Usage',
+                    yaxis_title=f'{value_to_label.get(col, col)} Usage',
                     template='plotly_white'
                 )
 
                 # Append statistics and graph for the current energy type
                 stats_output.append(html.Div([
-                    html.P(f"Highest Day for {col}: {highest_day}"),
+                    html.P(f"Highest Day for {value_to_label.get(col, col)}: {highest_day}"),
                     html.P(f"Highest Usage: {highest_usage}"),
                     html.P(f"Time of Maximum Usage: {max_time}"),
                     dcc.Graph(figure=fig, className='statistics-graph')
@@ -96,7 +98,7 @@ def register_statistics_callbacks(app):
                 x=highest_day_data['Time'],
                 y=highest_day_data[energy_type],
                 mode='lines+markers',
-                name=f'{energy_type} Usage'
+                name=f'{value_to_label.get(energy_type, energy_type)} Usage'
             ))
 
             # Highlight the maximum point
@@ -109,19 +111,18 @@ def register_statistics_callbacks(app):
             ))
 
             fig.update_layout(
-                title=f'{energy_type} Usage on {highest_day}',
+                title=f'{value_to_label.get(energy_type, energy_type)} Usage on {highest_day}',
                 xaxis_title='Time',
-                yaxis_title=f'{energy_type} Usage',
+                yaxis_title=f'{value_to_label.get(energy_type, energy_type)} Usage',
                 template='plotly_white'
             )
 
             # Return the statistics and graph
             return html.Div([
-                html.P(f"Highest Day for {energy_type}: {highest_day}"),
+                html.P(f"Highest Day for {value_to_label.get(energy_type, energy_type)}: {highest_day}"),
                 html.P(f"Highest Usage: {highest_usage}"),
                 html.P(f"Time of Maximum Usage: {max_time}"),
                 dcc.Graph(figure=fig, className='statistics-graph')
             ], className='statistics-written-data')
 
         return "Invalid energy type selected."
-
