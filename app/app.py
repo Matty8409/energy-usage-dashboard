@@ -67,21 +67,32 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
 ])
 
 @app.callback(
-    Output('data-store', 'data'),
+    [Output('data-store', 'data'),
+     Output('upload-message', 'children')],
     [Input('add-file', 'contents')],
     [State('add-file', 'filename'),
      State('data-store', 'data')]
 )
 def upload_files_or_zips(contents_list, filenames, data):
     if contents_list is not None:
+        messages = []
         for contents, filename in zip(contents_list, filenames):
-            process_uploaded_file(contents, filename, data)
+            data, message = process_uploaded_file(contents, filename, data)
+            messages.append(message)
 
-        # Reload the data from the CSV_files directory
         updated_df = load_initial_csv_data()
         updated_df = apply_pulse_ratios(updated_df, pulse_ratios)
-        return updated_df.to_dict('records')
-    return dash.no_update
+
+        # Map long names to simple names for pulse ratios
+        from app.config import energy_type_mapping
+        pulse_ratios_display = ", ".join(
+            [f"{energy_type_mapping.get(k, k)}: {v}" for k, v in pulse_ratios.items()]
+        )
+
+        combined_message = " ".join(messages) + f" The following pulse ratios have been applied: {pulse_ratios_display}."
+        return updated_df.to_dict('records'), combined_message
+
+    return dash.no_update, ""
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])

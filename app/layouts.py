@@ -79,6 +79,7 @@ def get_dashboard_layout():
                 multiple=True
             ), width={"size": 6, "offset": 3}, className='mb-4 text-center')
         ]),
+        html.Div(id='upload-message', className='text-success mt-3'),
 
         # Navigation Buttons
         dbc.Row([

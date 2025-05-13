@@ -26,27 +26,20 @@ def process_uploaded_file(contents, filename, existing_data):
                 for file in z.namelist():
                     if file.endswith('.xlsx'):
                         with z.open(file) as f:
-                            # Extract date key or use a default folder
                             date_key = os.path.basename(file).split('_')[0] if '_' in file else 'Unknown'
                             folder_path = os.path.join(UPLOAD_FOLDER, date_key)
                             os.makedirs(folder_path, exist_ok=True)
-
-                            # Save the extracted file to the correct folder
                             save_path = os.path.join(folder_path, file)
                             with open(save_path, 'wb') as out_file:
                                 out_file.write(f.read())
         else:
-            # Extract date key or use a default folder
             date_key = os.path.basename(filename).split('_')[0] if '_' in filename else 'Unknown'
             folder_path = os.path.join(UPLOAD_FOLDER, date_key)
             os.makedirs(folder_path, exist_ok=True)
-
-            # Save the uploaded Excel file to the correct folder
             save_path = os.path.join(folder_path, filename)
             with open(save_path, 'wb') as out_file:
                 out_file.write(decoded)
 
-        # Process the file and update the data
         if filename.endswith('.xlsx'):
             df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
             date_key = os.path.basename(filename).split('_')[0] if '_' in filename else 'Unknown'
@@ -57,14 +50,13 @@ def process_uploaded_file(contents, filename, existing_data):
                 df_combined = pd.DataFrame(existing_data)
                 df_combined = pd.concat([df_combined, df_new], ignore_index=True)
 
-            # Sort and remove duplicates
             if 'Date' in df_combined.columns and 'Time' in df_combined.columns:
                 df_combined = df_combined.sort_values(by=['Date', 'Time'])
                 df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
 
-            return df_combined.to_dict('records')
+            return df_combined.to_dict('records'), f"File '{filename}' uploaded and processed successfully."
 
-        return existing_data
+        return existing_data, f"File '{filename}' uploaded successfully but not processed."
 
     except Exception as e:
         logging.error(f"Error processing file {filename}: {e}")
