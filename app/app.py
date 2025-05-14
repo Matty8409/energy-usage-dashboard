@@ -10,11 +10,12 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_type_mapping
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout
+from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout, get_costs_and_carbon_layout
 from app.login import register_login_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
+from app.costs_and_carbon import register_costs_and_carbon_callbacks
 
 # Create a Flask server instance
 server = Flask(__name__)
@@ -63,7 +64,8 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     get_dashboard_layout(),
     get_register_layout(),
     get_statistics_layout(),
-    get_save_data_collection_layout()
+    get_save_data_collection_layout(),
+    get_costs_and_carbon_layout()
 ])
 
 @app.callback(
@@ -109,6 +111,8 @@ def display_page(pathname):
         return get_register_layout()
     elif pathname == '/statistics':
         return get_statistics_layout()
+    elif pathname == '/costs-and-carbon':
+        return get_costs_and_carbon_layout()
     else:
         return get_login_layout()  # Default to login if no matching path
 
@@ -116,6 +120,7 @@ def register_callbacks():
     register_login_callbacks(app, get_dashboard_layout)
     register_statistics_callbacks(app)
     register_save_data_callbacks(app)
+    register_costs_and_carbon_callbacks(app)
 
 register_callbacks()
 

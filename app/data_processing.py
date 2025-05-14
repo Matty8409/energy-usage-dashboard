@@ -7,8 +7,7 @@ import io
 import zipfile
 import openpyxl
 import logging
-
-from app.config import pulse_ratios
+from app.config import pulse_ratios, energy_type_mapping
 
 # Dynamically construct the path to the CSV_files folder
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # Get the project root directory
@@ -102,4 +101,14 @@ def apply_pulse_ratios(df, pulse_ratios):
 def get_processed_data():
     df = load_initial_csv_data()
     df = apply_pulse_ratios(df, pulse_ratios)
+    return df
+
+def convert_gas_to_kwh(df):
+    """
+    Converts gas readings from m³ to kWh in the provided DataFrame.
+    """
+    gas_column = next((col for col, energy_type in energy_type_mapping.items() if energy_type == 'Gas'), None)
+    if gas_column and gas_column in df.columns:
+        gas_conversion_factor = 11.2  # Example: 1 m³ of gas = 11.2 kWh
+        df[gas_column] = df[gas_column] * gas_conversion_factor
     return df

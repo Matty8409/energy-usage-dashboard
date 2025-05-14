@@ -86,7 +86,8 @@ def get_dashboard_layout():
             dbc.Col([
                 html.Div([
                     dcc.Link(dbc.Button("Statistics", color="info", className="me-2"), href='/statistics'),
-                    dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
+                    dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection'),
+                    dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
                 ], className='d-flex justify-content-center')
             ], width=12)
         ], className='mt-4 mb-4')
@@ -149,7 +150,8 @@ def get_statistics_layout():
         html.Div(id='statistics-output', className='statistics-container'),
         html.Div([
             dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
-            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
+            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection'),
+            dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
         ], className='d-flex justify-content-center mt-4')
     ])
     return statistics_layout
@@ -309,7 +311,8 @@ def get_save_data_collection_layout():
                 dbc.Col([
                     html.Div([
                         dcc.Link(dbc.Button("Dashboard", color="info", className="me-2"), href='/dashboard'),
-                        dcc.Link(dbc.Button("Statistics", color="success"), href='/statistics')
+                        dcc.Link(dbc.Button("Statistics", color="success"), href='/statistics'),
+                        dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
                     ], className='d-flex justify-content-center')
                 ], width=12)
             ], className='mt-4 mb-4')
@@ -317,3 +320,69 @@ def get_save_data_collection_layout():
     ])
 
     return save_data_collection_layout
+
+def get_costs_and_carbon_layout():
+    initial_df = load_initial_csv_data()
+    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
+
+    return html.Div(id='theme-wrapper', children=[
+        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
+        html.H1("Costs and Carbon", className='header-title'),
+        dcc.Dropdown(
+            id='costs-energy-type-dropdown',
+            options=[
+                {'label': 'Electricity', 'value': 'Electricity'},
+                {'label': 'Gas', 'value': 'Gas'},
+                {'label': 'Water 1', 'value': 'Water 1'},
+                {'label': 'Water 2', 'value': 'Water 2'}
+            ],
+            placeholder='Select Energy Type',
+            className='mb-3',
+            style={'width': '400px'}  # Adjusted width
+        ),
+        html.Div([
+            dcc.Dropdown(
+                id='costs-start-date-dropdown',
+                placeholder='Select Start Date',
+                className='mb-3',
+                style={'width': '400px'}  # Adjusted width
+            ),
+            dcc.Dropdown(
+                id='costs-end-date-dropdown',
+                placeholder='Select End Date',
+                className='mb-3',
+                style={'width': '400px'}  # Adjusted width
+            )
+        ]),
+        html.Button('Calculate', id='calculate-costs-button', className='btn btn-primary mb-3'),
+        html.Div(id='costs-and-carbon-output', className='mt-3'),
+
+        # Summary Section
+        html.Hr(),
+        html.H3("Summary of Costs and Carbon to Date", className='mt-4'),
+        dbc.Row([
+            dbc.Col(
+                html.Div(id='costs-summary-output', className='mt-3', style={
+                    'border': '1px solid #ccc',
+                    'padding': '10px',
+                    'borderRadius': '5px',
+                    'backgroundColor': '#f9f9f9'
+                }),
+                width=6
+            ),
+            dbc.Col(
+                html.Div(id='carbon-summary-output', className='mt-3', style={
+                    'border': '1px solid #ccc',
+                    'padding': '10px',
+                    'borderRadius': '5px',
+                    'backgroundColor': '#f9f9f9'
+                }),
+                width=6
+            )
+        ]),
+        html.Div([
+            dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
+            dcc.Link(dbc.Button("Statistics", color="success", className="me-2"), href='/statistics'),
+            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
+        ], className='d-flex justify-content-center mt-4')
+    ])
