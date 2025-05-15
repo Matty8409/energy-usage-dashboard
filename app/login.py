@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.DEBUG)
 from app.layouts import get_login_layout, get_register_layout
 from dash import no_update
 
-def register_login_callbacks(app, get_dashboard_layout):
+def register_login_callbacks(app, get_dashboard_layout, data):
     @app.callback(
         [Output('theme-wrapper', 'children'),  # Update the page content
          Output('url', 'pathname')],          # Update the URL
@@ -22,7 +22,7 @@ def register_login_callbacks(app, get_dashboard_layout):
             response, status_code = login_user(username, password)
             if status_code == 200:  # Login successful
                 session['logged_in'] = True
-                return get_dashboard_layout(), '/dashboard'  # Redirect to dashboard
+                return get_dashboard_layout(data), '/dashboard'  # Redirect to dashboard
             else:  # Login failed
                 return html.Div([
                     get_login_layout(),
@@ -37,7 +37,7 @@ from flask import session
 from app.auth import login_user, register_user
 from app.layouts import get_login_layout, get_register_layout
 
-def register_auth_callbacks(app, get_dashboard_layout):
+def register_auth_callbacks(app, get_dashboard_layout, data):
 
     @app.callback(
         Output('theme-wrapper', 'children'),
@@ -76,7 +76,7 @@ def register_auth_callbacks(app, get_dashboard_layout):
             response, status_code = login_user(login_username, login_password)
             if status_code == 200:
                 session['logged_in'] = True
-                return get_dashboard_layout()
+                return get_dashboard_layout(data)
             else:
                 return html.Div([
                     get_login_layout(),

@@ -34,10 +34,7 @@ def get_navigation_bar(active_page):
         className="mt-4 navbar-light-mode"
     )
 
-def get_dashboard_layout():
-    initial_df = load_initial_csv_data()
-    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-
+def get_dashboard_layout(data):
     dashboard_layout = dbc.Container(fluid=True, children=[
         dbc.Row([
             dbc.Col(html.H1('Energy Usage Dashboard'), className='mb-4 mt-4 text-center')
@@ -74,7 +71,7 @@ def get_dashboard_layout():
         ),
 
         dbc.Row([
-            dbc.Col([
+            dbc.Col(
                 dcc.Dropdown(
                     id='energy-type-dropdown',
                     options=energy_meter_options,
@@ -83,13 +80,20 @@ def get_dashboard_layout():
                     className='mb-3',
                     style={'width': '300px'}  # Adjust width
                 ),
+                width=6, className='d-flex justify-content-center'  # Center the column
+            )
+        ], className='d-flex justify-content-center mb-3'),
+
+        dbc.Row([
+            dbc.Col(
                 dcc.Dropdown(
                     id='date-dropdown',
                     placeholder='Select a date',
                     className='mb-3',
                     style={'width': '300px'}  # Adjust width
-                )
-            ], width=6, className='d-flex justify-content-center')  # Center the column
+                ),
+                width=6, className='d-flex justify-content-center'  # Center the column
+            )
         ], className='d-flex justify-content-center mb-3'),
 
         dbc.Row([
@@ -119,7 +123,6 @@ def get_dashboard_layout():
     ])
 
     return dashboard_layout
-
 
 def get_login_layout():
     login_layout = dbc.Container([
@@ -152,22 +155,18 @@ def get_register_layout():
     ])
     return register_layout
 
-def get_statistics_layout():
-    initial_df = load_initial_csv_data()
-    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-
+def get_statistics_layout(data):
     statistics_layout = html.Div(id='theme-wrapper', children=[
         html.H1("Energy Usage Statistics", className='header-title'),
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
             options=[
-                {'label': 'All Energy Types', 'value': 'all'},
                 {'label': 'Electricity (kWh)', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
                 {'label': 'Gas (kWh)', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
                 {'label': 'Water 1 (kWh)', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
                 {'label': 'Water 2 (kWh)', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
             ],
-            value='all',
+            value='TH-E-01 kWh (kWh) [DELTA] 1',
             placeholder='Select Energy Type',
             className='statistics-energy-type-dropdown'
         ),
@@ -176,11 +175,7 @@ def get_statistics_layout():
     ])
     return statistics_layout
 
-
-def get_save_data_collection_layout():
-    initial_df = load_initial_csv_data()
-    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-
+def get_save_data_collection_layout(data):
     save_data_collection_layout = dbc.Container(fluid=True, children=[
         html.H2("Save and Collect Data", className="text-center my-4"),
 
@@ -338,10 +333,7 @@ def get_save_data_collection_layout():
 
     return save_data_collection_layout
 
-def get_costs_and_carbon_layout():
-    initial_df = load_initial_csv_data()
-    initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
-
+def get_costs_and_carbon_layout(data):
     return html.Div(id='theme-wrapper', children=[
         html.H1("Costs and Carbon", className='header-title'),
         dcc.Dropdown(

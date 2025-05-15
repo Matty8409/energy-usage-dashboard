@@ -62,11 +62,11 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     html.Div(id='page-content'),
     dcc.Store(id='data-store', data=initial_df.to_dict('records')),
     get_login_layout(),
-    get_dashboard_layout(),
+    get_dashboard_layout(initial_df),
     get_register_layout(),
-    get_statistics_layout(),
-    get_save_data_collection_layout(),
-    get_costs_and_carbon_layout()
+    get_statistics_layout(initial_df),
+    get_save_data_collection_layout(initial_df),
+    get_costs_and_carbon_layout(initial_df)
 ])
 
 @app.callback(
@@ -105,20 +105,20 @@ def display_page(pathname):
         return get_login_layout()  # Redirect to login layout if not logged in
     # Handle page routing
     if pathname == '/dashboard':
-        return get_dashboard_layout()
+        return get_dashboard_layout(initial_df)
     elif pathname == '/save-data-collection':
-        return get_save_data_collection_layout()
+        return get_save_data_collection_layout(initial_df)
     elif pathname == '/register':
         return get_register_layout()
     elif pathname == '/statistics':
-        return get_statistics_layout()
+        return get_statistics_layout(initial_df)
     elif pathname == '/costs-and-carbon':
-        return get_costs_and_carbon_layout()
+        return get_costs_and_carbon_layout(initial_df)
     else:
         return get_login_layout()  # Default to login if no matching path
 
 def register_callbacks():
-    register_login_callbacks(app, get_dashboard_layout)
+    register_login_callbacks(app, get_dashboard_layout, initial_df)
     register_statistics_callbacks(app)
     register_save_data_callbacks(app)
     register_costs_and_carbon_callbacks(app)
