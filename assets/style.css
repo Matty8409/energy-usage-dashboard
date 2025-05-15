@@ -341,3 +341,30 @@ html, body, #_dash-app-content, #theme-wrapper {
     background-color: #0056b3; /* Match hover color */
     border-color: #0056b3;
 }
+
+/* Light Mode Navigation Bar Styles */
+.navbar-light-mode {
+    background-color: #f8f9fa !important; /* Light background */
+    border-radius: 5px;
+    border: 1px solid #e0e0e0; /* Subtle border for separation */
+}
+
+.nav-link {
+    color: #343a40 !important; /* Dark text */
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-link:hover {
+    background-color: #e9ecef !important; /* Slightly darker background on hover */
+    color: #343a40 !important; /* Keep text dark */
+    border-radius: 5px;
+}
+
+.nav-link.active {
+    background-color: #007bff !important; /* Highlight active page */
+    color: #ffffff !important; /* White text for active link */
+    border-radius: 5px;
+}

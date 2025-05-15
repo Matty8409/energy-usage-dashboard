@@ -17,10 +17,9 @@ def get_navigation_bar(active_page):
                 [
                     dbc.NavItem(
                         dcc.Link(
-                            dbc.Button(
+                            html.Div(
                                 item['label'],
-                                color=item['color'],
-                                className=f"me-2 {'btn-secondary' if active_page == item['href'] else ''}"
+                                className=f"nav-link {'active' if active_page == item['href'] else ''}"
                             ),
                             href=item['href'],
                             style={'textDecoration': 'none'}
@@ -30,9 +29,9 @@ def get_navigation_bar(active_page):
                 className='d-flex justify-content-center'
             )
         ]),
-        color="light",
+        color="white",
         dark=False,
-        className="mt-4"
+        className="mt-4 navbar-light-mode"
     )
 
 def get_dashboard_layout():
