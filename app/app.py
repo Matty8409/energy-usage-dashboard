@@ -65,7 +65,7 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     get_dashboard_layout(initial_df),
     get_register_layout(),
     get_statistics_layout(initial_df),
-    get_save_data_collection_layout(initial_df),
+    get_save_data_collection_layout(initial_df, app),
     get_costs_and_carbon_layout(initial_df)
 ])
 
@@ -107,7 +107,7 @@ def display_page(pathname):
     if pathname == '/dashboard':
         return get_dashboard_layout(initial_df)
     elif pathname == '/save-data-collection':
-        return get_save_data_collection_layout(initial_df)
+        return get_save_data_collection_layout(initial_df, app)
     elif pathname == '/register':
         return get_register_layout()
     elif pathname == '/statistics':
@@ -249,7 +249,6 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
         except Exception as e:
             logging.error(f"Error creating heatmap view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
 
     elif view_type == 'graph':
         try:

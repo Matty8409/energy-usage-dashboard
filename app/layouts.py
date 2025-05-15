@@ -1,7 +1,11 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
+from flask import current_app
+
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
+from app.models import SavedCollection
+
 
 # Helper function for navigation bar
 def get_navigation_bar(active_page):
@@ -175,8 +179,20 @@ def get_statistics_layout(data):
     ])
     return statistics_layout
 
-def get_save_data_collection_layout(data):
+def get_save_data_collection_layout(data, app):
+    with app.server.app_context():  # Ensure the query runs within an app context
+        all_rows = SavedCollection.query.order_by(SavedCollection.datetime).all()
+        store_data = [{
+            'group_name': row.group_name,
+            'energy_type': row.energy_type,
+            'date': row.date,
+            'input': row.input,
+            'datetime': row.datetime,
+            'values': row.values
+        } for row in all_rows]
+
     save_data_collection_layout = dbc.Container(fluid=True, children=[
+        dcc.Store(id='saved-data-store', data=store_data),
         html.H2("Save and Collect Data", className="text-center my-4"),
 
         dbc.Row([

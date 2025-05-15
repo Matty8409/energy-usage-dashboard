@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="app" uuid="85d89752-7613-4c3f-b607-0e0a7df17d18">
+    <data-source source="LOCAL" name="app" uuid="9ca2257c-6664-48a5-b6ac-bd74a202fc10">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\mattm\Documents\GitHub\finalProjectTesting\instance\app.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:C:\Users\mattm\Documents\GitHub\energy-usage-dashboard\instance\app.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>
