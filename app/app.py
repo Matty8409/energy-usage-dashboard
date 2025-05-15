@@ -53,13 +53,14 @@ initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    dcc.Store(id='data-store', data=initial_df.to_dict('records')),  # Initialize globally
-    html.Div(id='page-content')
+    html.Div(id='page-content'),
+    dcc.Store(id='data-store', data=initial_df.to_dict('records'))
 ])
 
 app.validation_layout = html.Div([  # Ensure that 'url' is part of the validation layout
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
+    dcc.Store(id='data-store', data=initial_df.to_dict('records')),
     get_login_layout(),
     get_dashboard_layout(),
     get_register_layout(),

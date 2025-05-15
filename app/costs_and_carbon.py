@@ -33,7 +33,9 @@ def register_costs_and_carbon_callbacks(app):
 
             # Energy type dropdown options
             energy_columns = [col for col in df.columns if col not in ['Date', 'Time']]
-            energy_options = [{'label': energy_type_mapping.get(col, col), 'value': col} for col in energy_columns]
+            energy_options = [{'label': 'All Energy Types', 'value': 'all'}] + [
+                {'label': energy_type_mapping.get(col, col), 'value': col} for col in energy_columns
+            ]
 
             default_energy_type = energy_columns[0] if energy_columns else None
 
@@ -66,16 +68,31 @@ def register_costs_and_carbon_callbacks(app):
             if start_date and end_date:
                 df = df[(df['Date'] >= pd.to_datetime(start_date)) & (df['Date'] <= pd.to_datetime(end_date))]
 
-            # Filter by energy type
+            # Handle "All" energy types
+            if energy_type == 'all':
+                total_cost = 0
+                total_carbon = 0
+                for col in df.columns:
+                    if col not in ['Date', 'Time']:
+                        readable_energy_type = energy_type_mapping.get(col, col)
+                        conversion = conversion_factors.get(readable_energy_type, {})
+                        if conversion:
+                            cost_per_unit = conversion['cost_per_unit']
+                            carbon_per_unit = conversion['carbon_per_unit']
+                            total_cost += (df[col] * cost_per_unit).sum()
+                            total_carbon += (df[col] * carbon_per_unit).sum()
+
+                return (f"Total Cost: £{total_cost:.2f}, "
+                        f"Total Carbon Emissions: {total_carbon:.2f} kgCO2")
+
+            # Filter by specific energy type
             if energy_type in df.columns:
                 df = df[['Date', 'Time', energy_type]]
             else:
                 return f"Energy type '{energy_type}' not found in data."
 
-            # Convert gas readings from m³ to kWh
-            readable_energy_type = energy_type_mapping.get(energy_type, energy_type)
-
             # Apply conversion factors
+            readable_energy_type = energy_type_mapping.get(energy_type, energy_type)
             conversion = conversion_factors.get(readable_energy_type, {})
             if not conversion:
                 return f"No conversion factors available for '{readable_energy_type}'."

@@ -3,6 +3,37 @@ from dash import html, dcc, dash_table
 from app.data_processing import load_initial_csv_data, apply_pulse_ratios
 from app.config import pulse_ratios, energy_meter_options
 
+# Helper function for navigation bar
+def get_navigation_bar(active_page):
+    nav_items = [
+        {'label': 'Dashboard', 'href': '/dashboard', 'color': 'info'},
+        {'label': 'Statistics', 'href': '/statistics', 'color': 'success'},
+        {'label': 'Collections', 'href': '/save-data-collection', 'color': 'primary'},
+        {'label': 'Costs and Carbon', 'href': '/costs-and-carbon', 'color': 'warning'}
+    ]
+    return dbc.Navbar(
+        dbc.Container([
+            dbc.Nav(
+                [
+                    dbc.NavItem(
+                        dcc.Link(
+                            dbc.Button(
+                                item['label'],
+                                color=item['color'],
+                                className=f"me-2 {'btn-secondary' if active_page == item['href'] else ''}"
+                            ),
+                            href=item['href'],
+                            style={'textDecoration': 'none'}
+                        )
+                    ) for item in nav_items
+                ],
+                className='d-flex justify-content-center'
+            )
+        ]),
+        color="light",
+        dark=False,
+        className="mt-4"
+    )
 
 def get_dashboard_layout():
     initial_df = load_initial_csv_data()
@@ -70,7 +101,6 @@ def get_dashboard_layout():
             ), width=12)
         ]),
 
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
 
         dbc.Row([
             dbc.Col(dcc.Upload(
@@ -80,17 +110,13 @@ def get_dashboard_layout():
             ), width={"size": 6, "offset": 3}, className='mb-4 text-center')
         ]),
         html.Div(id='upload-message', className='text-success mt-3'),
-
-        # Navigation Buttons
         dbc.Row([
-            dbc.Col([
-                html.Div([
-                    dcc.Link(dbc.Button("Statistics", color="info", className="me-2"), href='/statistics'),
-                    dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection'),
-                    dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
-                ], className='d-flex justify-content-center')
-            ], width=12)
-        ], className='mt-4 mb-4')
+            dbc.Col(
+                get_navigation_bar('/dashboard'),  # Add navigation bar
+                width=12,  # Ensure the navigation bar spans the full width
+                className='d-flex justify-content-center'  # Center the navigation bar
+            )
+        ])
     ])
 
     return dashboard_layout
@@ -132,7 +158,6 @@ def get_statistics_layout():
     initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
     statistics_layout = html.Div(id='theme-wrapper', children=[
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
         html.H1("Energy Usage Statistics", className='header-title'),
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
@@ -148,11 +173,7 @@ def get_statistics_layout():
             className='statistics-energy-type-dropdown'
         ),
         html.Div(id='statistics-output', className='statistics-container'),
-        html.Div([
-            dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
-            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection'),
-            dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
-        ], className='d-flex justify-content-center mt-4')
+        get_navigation_bar('/statistics')  # Add navigation bar
     ])
     return statistics_layout
 
@@ -263,7 +284,6 @@ def get_save_data_collection_layout():
         ]),
 
         dcc.Store(id='saved-data-store', data=[]),
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
         html.H4("Preview Section", className="text-muted mt-4"),
         html.P(
             "This section allows you to preview the data based on your current selections for date and energy type. "
@@ -307,15 +327,13 @@ def get_save_data_collection_layout():
                     )
                 ]
             ),
-            dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        dcc.Link(dbc.Button("Dashboard", color="info", className="me-2"), href='/dashboard'),
-                        dcc.Link(dbc.Button("Statistics", color="success"), href='/statistics'),
-                        dcc.Link(dbc.Button("Costs and Carbon", color="info"), href='/costs-and-carbon')
-                    ], className='d-flex justify-content-center')
-                ], width=12)
-            ], className='mt-4 mb-4')
+        ]),
+        dbc.Row([
+            dbc.Col(
+                get_navigation_bar('/save-data-collection'),  # Add navigation bar
+                width=12,  # Ensure the navigation bar spans the full width
+                className='d-flex justify-content-center'  # Center the navigation bar
+            )
         ])
     ])
 
@@ -326,11 +344,11 @@ def get_costs_and_carbon_layout():
     initial_df = apply_pulse_ratios(initial_df, pulse_ratios)
 
     return html.Div(id='theme-wrapper', children=[
-        dcc.Store(id='data-store', data=initial_df.to_dict('records')),
         html.H1("Costs and Carbon", className='header-title'),
         dcc.Dropdown(
             id='costs-energy-type-dropdown',
             options=[
+                {'label': 'All Energy Types', 'value': 'all'},  # Added "All" option
                 {'label': 'Electricity', 'value': 'Electricity'},
                 {'label': 'Gas', 'value': 'Gas'},
                 {'label': 'Water 1', 'value': 'Water 1'},
@@ -380,9 +398,5 @@ def get_costs_and_carbon_layout():
                 width=6
             )
         ]),
-        html.Div([
-            dcc.Link(dbc.Button("Go to Dashboard", color="info", className="me-2"), href='/dashboard'),
-            dcc.Link(dbc.Button("Statistics", color="success", className="me-2"), href='/statistics'),
-            dcc.Link(dbc.Button("Collections", color="success"), href='/save-data-collection')
-        ], className='d-flex justify-content-center mt-4')
+        get_navigation_bar('/costs-and-carbon')  # Add navigation bar
     ])
