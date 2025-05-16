@@ -10,14 +10,14 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_type_mapping, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts.dashboard import get_dashboard_layout
-from app.layouts.login import get_login_layout
-from app.layouts.register import get_register_layout
-from app.layouts.statistics import get_statistics_layout
-from app.layouts.save_data_collection import get_save_data_collection_layout
+from app.layouts.dashboard_layout import get_dashboard_layout
+from app.layouts.login_layout import get_login_layout
+from app.layouts.register_layout import get_register_layout
+from app.layouts.statistics_layout import get_statistics_layout
+from app.layouts.save_data_collection_layout import get_save_data_collection_layout
 from app.data_processing import load_initial_csv_data
-from app.layouts.costs_and_carbon import get_costs_and_carbon_layout
-from app.login import register_auth_callbacks
+from app.layouts.costs_and_carbon_layout import get_costs_and_carbon_layout
+from app.login import register_auth_callbacks, register_login_callbacks
 from app.register import register_register_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
@@ -131,7 +131,6 @@ def register_callbacks():
     register_statistics_callbacks(app)
     register_save_data_callbacks(app)
     register_costs_and_carbon_callbacks(app)
-    register_register_callbacks(app)
 
 register_callbacks()
 

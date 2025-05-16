@@ -31,8 +31,8 @@ import dash
 from dash import Input, Output, State, html
 from flask import session
 from app.auth import login_user, register_user
-from app.layouts.register import get_register_layout
-from app.layouts.login import get_login_layout
+from app.layouts.register_layout import get_register_layout
+from app.layouts.login_layout import get_login_layout
 
 def register_auth_callbacks(app, get_dashboard_layout, data):
 
