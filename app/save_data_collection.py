@@ -4,9 +4,7 @@ from io import BytesIO
 import pandas as pd
 import logging
 from dash import Input, Output, State, html, dash_table, dcc
-
 from app.config import energy_type_mapping
-
 
 def register_save_data_callbacks(app):
     @app.callback(

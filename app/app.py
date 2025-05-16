@@ -10,7 +10,13 @@ from flask import Flask, session
 from app.config import pulse_ratios, energy_type_mapping
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
-from app.layouts import get_dashboard_layout, get_login_layout, get_register_layout, get_statistics_layout, get_save_data_collection_layout, get_costs_and_carbon_layout
+from app.layouts.dashboard import get_dashboard_layout
+from app.layouts.login import get_login_layout
+from app.layouts.register import get_register_layout
+from app.layouts.statistics import get_statistics_layout
+from app.layouts.save_data_collection import get_save_data_collection_layout
+from app.data_processing import load_initial_csv_data
+from app.layouts.costs_and_carbon import get_costs_and_carbon_layout
 from app.login import register_login_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks

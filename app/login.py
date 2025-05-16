@@ -1,9 +1,5 @@
 import logging
-from dash import html, dcc, Input, Output, State
-from flask import session
-from app.auth import login_user
 logging.basicConfig(level=logging.DEBUG)
-from app.layouts import get_login_layout, get_register_layout
 from dash import no_update
 
 def register_login_callbacks(app, get_dashboard_layout, data):
@@ -35,7 +31,8 @@ import dash
 from dash import Input, Output, State, html
 from flask import session
 from app.auth import login_user, register_user
-from app.layouts import get_login_layout, get_register_layout
+from app.layouts.register import get_register_layout
+from app.layouts.login import get_login_layout
 
 def register_auth_callbacks(app, get_dashboard_layout, data):
 
