@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
-from app.config import pulse_ratios, energy_type_mapping
+from app.config import pulse_ratios, energy_type_mapping, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
 from app.layouts.dashboard import get_dashboard_layout
@@ -17,7 +17,8 @@ from app.layouts.statistics import get_statistics_layout
 from app.layouts.save_data_collection import get_save_data_collection_layout
 from app.data_processing import load_initial_csv_data
 from app.layouts.costs_and_carbon import get_costs_and_carbon_layout
-from app.login import register_login_callbacks
+from app.login import register_auth_callbacks
+from app.register import register_register_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
@@ -114,6 +115,8 @@ def display_page(pathname):
         return get_dashboard_layout(initial_df)
     elif pathname == '/save-data-collection':
         return get_save_data_collection_layout(initial_df, app)
+    elif pathname == '/login':
+        return get_login_layout()
     elif pathname == '/register':
         return get_register_layout()
     elif pathname == '/statistics':
@@ -128,6 +131,7 @@ def register_callbacks():
     register_statistics_callbacks(app)
     register_save_data_callbacks(app)
     register_costs_and_carbon_callbacks(app)
+    register_register_callbacks(app)
 
 register_callbacks()
 
@@ -256,25 +260,79 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
             logging.error(f"Error creating heatmap view: {e}")
             return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
+
     elif view_type == 'graph':
+
         try:
+
             df_melted = df_filtered.melt(
+
                 id_vars=['Time', 'Date'],
-                value_vars=[selected_energy_type] if selected_energy_type != 'all' else df_filtered.columns[2:],
+
+                value_vars=(
+
+                    [selected_energy_type]
+
+                    if selected_energy_type != 'all'
+
+                    else df_filtered.columns.difference(['Date', 'Time'])
+
+                ),
+
                 var_name='Energy Type',
+
                 value_name='Usage'
+
             )
+
+            # Build basic figure
+
             fig = px.line(
+
                 df_melted,
+
                 x='Time',
+
                 y='Usage',
+
                 color='Energy Type',
-                title=f'Energy Usage on {selected_date}' if selected_date not in ['all', 'average'] else 'Energy Usage Over Time',
+
+                title=(
+
+                    f'Energy Usage on {selected_date}'
+
+                    if selected_date not in ['all', 'average']
+
+                    else 'Energy Usage Over Time'
+
+                ),
+
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
+
             )
+
+            # Update layout
+            energy_label_map = {opt['value']: opt['label'] for opt in energy_meter_options}
+            # 1) Update the y-axis title to the selected type’s pretty name
+
+            if selected_energy_type != 'all':
+                pretty = energy_label_map.get(selected_energy_type, 'Usage')
+                fig.update_yaxes(title_text=pretty)
+
+            # 2) Remap each legend entry to its pretty name
+
+            for trace in fig.data:
+                raw_name = trace.name  # e.g. 'TH-E-01 kWh (kWh) [DELTA] 1'
+                trace.name = energy_label_map.get(raw_name, raw_name)
+
+
             return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
+
+
         except Exception as e:
+
             logging.error(f"Error creating graph view: {e}")
+
             return dash.no_update, date_options, selected_date, dash.no_update
 
 @app.callback(
