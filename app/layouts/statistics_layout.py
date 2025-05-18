@@ -1,18 +1,14 @@
 from dash import html, dcc
 from app.layouts.navigation_bar import get_navigation_bar
+from app.config import energy_meter_options
 
 def get_statistics_layout(data):
     statistics_layout = html.Div(id='theme-wrapper', children=[
         html.H1("Energy Usage Statistics", className='header-title'),
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
-            options=[
-                {'label': 'Electricity (kWh)', 'value': 'TH-E-01 kWh (kWh) [DELTA] 1'},
-                {'label': 'Gas (kWh)', 'value': 'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1'},
-                {'label': 'Water 1 (kWh)', 'value': 'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1'},
-                {'label': 'Water 2 (kWh)', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
-            ],
-            value='TH-E-01 kWh (kWh) [DELTA] 1',
+            options=energy_meter_options,  # Dynamically use options from config
+            value=energy_meter_options[0]['value'] if energy_meter_options else None,
             placeholder='Select Energy Type',
             className='statistics-energy-type-dropdown'
         ),

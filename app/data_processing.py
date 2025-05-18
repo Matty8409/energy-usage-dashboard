@@ -31,6 +31,22 @@ def process_uploaded_file(contents, filename, existing_data):
                             save_path = os.path.join(folder_path, file)
                             with open(save_path, 'wb') as out_file:
                                 out_file.write(f.read())
+
+                            # Process the extracted .xlsx file
+                            df_new = pd.read_excel(save_path, engine='openpyxl')
+                            df_new['Date'] = pd.to_datetime(date_key)
+                            if existing_data is None:
+                                existing_data = df_new
+                            else:
+                                existing_data = pd.concat([pd.DataFrame(existing_data), df_new], ignore_index=True)
+
+            # Ensure sorting and grouping after processing all files
+            if 'Date' in existing_data.columns and 'Time' in existing_data.columns:
+                existing_data = existing_data.sort_values(by=['Date', 'Time'])
+                existing_data = existing_data.groupby(['Date', 'Time'], as_index=False).first()
+
+            return existing_data
+
         else:
             date_key = os.path.basename(filename).split('_')[0] if '_' in filename else 'Unknown'
             folder_path = os.path.join(UPLOAD_FOLDER, date_key)
@@ -39,23 +55,21 @@ def process_uploaded_file(contents, filename, existing_data):
             with open(save_path, 'wb') as out_file:
                 out_file.write(decoded)
 
-        if filename.endswith('.xlsx'):
-            df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
-            date_key = os.path.basename(filename).split('_')[0] if '_' in filename else 'Unknown'
-            df_new['Date'] = pd.to_datetime(date_key)
-            if existing_data is None:
-                df_combined = df_new
-            else:
-                df_combined = pd.DataFrame(existing_data)
-                df_combined = pd.concat([df_combined, df_new], ignore_index=True)
+            if filename.endswith('.xlsx'):
+                df_new = pd.read_excel(io.BytesIO(decoded), engine='openpyxl')
+                df_new['Date'] = pd.to_datetime(date_key)
+                if existing_data is None:
+                    existing_data = df_new
+                else:
+                    existing_data = pd.concat([pd.DataFrame(existing_data), df_new], ignore_index=True)
 
-            if 'Date' in df_combined.columns and 'Time' in df_combined.columns:
-                df_combined = df_combined.sort_values(by=['Date', 'Time'])
-                df_combined = df_combined.groupby(['Date', 'Time'], as_index=False).first()
+                if 'Date' in existing_data.columns and 'Time' in existing_data.columns:
+                    existing_data = existing_data.sort_values(by=['Date', 'Time'])
+                    existing_data = existing_data.groupby(['Date', 'Time'], as_index=False).first()
 
-            return df_combined.to_dict('records'), f"File '{filename}' uploaded and processed successfully."
+                return existing_data
 
-        return existing_data, f"File '{filename}' uploaded successfully but not processed."
+        return existing_data
 
     except Exception as e:
         logging.error(f"Error processing file {filename}: {e}")
@@ -95,7 +109,7 @@ def load_initial_csv_data(path=UPLOAD_FOLDER):
 def apply_pulse_ratios(df, pulse_ratios):
     for column, ratio in pulse_ratios.items():
         if column in df.columns:
-            df[column] = df[column] * ratio
+            df[column] = (df[column] * ratio).round(3)
     return df
 
 def get_processed_data():

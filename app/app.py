@@ -85,22 +85,22 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
 )
 def upload_files_or_zips(contents_list, filenames, data):
     if contents_list is not None:
-        messages = []
         for contents, filename in zip(contents_list, filenames):
-            data, message = process_uploaded_file(contents, filename, data)
-            messages.append(message)
+            data = process_uploaded_file(contents, filename, data)
 
         updated_df = load_initial_csv_data()
         updated_df = apply_pulse_ratios(updated_df, pulse_ratios)
 
-        # Map long names to simple names for pulse ratios
-        from app.config import energy_type_mapping
-        pulse_ratios_display = ", ".join(
-            [f"{energy_type_mapping.get(k, k)}: {v}" for k, v in pulse_ratios.items()]
+        # Map pulse ratios to user-friendly labels
+        pulse_ratios_applied = "\n".join(
+            [f"- {energy_type_mapping.get(key, key)}: {value}" for key, value in pulse_ratios.items()]
+        )
+        file_count_message = (
+            f"{len(filenames)} files uploaded and processed successfully.\n"
+            f"Pulse ratios applied:\n{pulse_ratios_applied}"
         )
 
-        combined_message = " ".join(messages) + f" The following pulse ratios have been applied: {pulse_ratios_display}."
-        return updated_df.to_dict('records'), combined_message
+        return updated_df.to_dict('records'), file_count_message
 
     return dash.no_update, ""
 

@@ -12,15 +12,15 @@ energy_meter_options = [
     {'label': 'Water 2 (m³)', 'value': 'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1'}
 ]
 energy_type_mapping = {
-    'TH-E-01 kWh (kWh) [DELTA] 1': 'Electricity',
-    'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1': 'Gas',
-    'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1': 'Water 1',
-    'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1': 'Water 2',
+    'TH-E-01 kWh (kWh) [DELTA] 1': 'Electricity kWh',
+    'TH-PM-01.TH-G-01 kWh (kWh) [DELTA] 1': 'Gas m³',
+    'TH-PM-01.TH-W-01 kWh (kWh) [DELTA] 1': 'Water 1 m³',
+    'TH-PM-01.TH-W-02 kWh (kWh) [DELTA] 1': 'Water 2 m³',
     'all': 'All Energy Types'
 }
 conversion_factors = {
-    'Electricity': {'cost_per_unit': 0.4703, 'carbon_per_unit': 0.2254},  # £0.2/kWh, 0.193 kgCO2/kWh
-    'Gas': {'cost_per_unit': 0.0989, 'carbon_per_unit': 0.129},        # £0.05/m³, 0.184 kgCO2/m³
-    'Water 1': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.344},    # £0.002/m³, 0.344 kgCO2/m³
-    'Water 2': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.3389},    # £0.002/m³, 0.344 kgCO2/m³
+    'Electricity kWh': {'cost_per_unit': 0.4703, 'carbon_per_unit': 0.2254},  # £0.2/kWh, 0.193 kgCO2/kWh
+    'Gas m³': {'cost_per_unit': 0.0989, 'carbon_per_unit': 0.129},        # £0.05/m³, 0.184 kgCO2/m³
+    'Water 1 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.344},    # £0.002/m³, 0.344 kgCO2/m³
+    'Water 2 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.3389},    # £0.002/m³, 0.344 kgCO2/m³
 }
