@@ -31,8 +31,6 @@ server = Flask(__name__)
 
 routes.register_routes()
 
-server.config.setdefault("SESSION_COOKIE_NAME", "session")
-server.session_cookie_name = server.config["SESSION_COOKIE_NAME"]
 server.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -51,25 +49,6 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database with the Flask server
 init_db(server)
-
-REDISCLOUD_URL = os.getenv('REDISCLOUD_URL', None)
-
-if REDISCLOUD_URL:
-    # Production: Use Redis for sessions
-    server.config['SESSION_TYPE'] = 'redis'
-    server.config['SESSION_REDIS'] = redis.from_url(REDISCLOUD_URL, decode_responses=True)
-else:
-    # Development: Use filesystem for sessions
-    server.config['SESSION_TYPE'] = 'filesystem'
-    server.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'flask_session_files')
-    os.makedirs(server.config['SESSION_FILE_DIR'], exist_ok=True)
-
-server.config['SESSION_PERMANENT'] = False
-server.config['SESSION_USE_SIGNER'] = True
-server.config['SESSION_KEY_PREFIX'] = 'session:'
-
-# Initialize Flask-Session before usage
-Session(server)
 
 app = Dash(
     __name__,
