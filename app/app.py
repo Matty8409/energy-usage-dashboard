@@ -31,6 +31,8 @@ server = Flask(__name__)
 
 routes.register_routes()
 
+server.config.setdefault("SESSION_COOKIE_NAME", "session")
+server.session_cookie_name = server.config["SESSION_COOKIE_NAME"]
 server.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
