@@ -4,9 +4,11 @@ import pandas as pd
 import plotly.express as px
 import logging
 import dash_bootstrap_components as dbc
+import redis
 from dash import Dash, html, dcc, dash_table, dash
 from dash.dependencies import Input, Output, State
 from flask import Flask, session
+from flask_session import Session
 from app.config import pulse_ratios, energy_type_mapping, energy_meter_options
 from app.data_processing import process_uploaded_file, load_initial_csv_data, apply_pulse_ratios
 from app.database import init_db
@@ -29,7 +31,7 @@ server = Flask(__name__)
 
 routes.register_routes()
 
-server.config['SECRET_KEY'] = os.urandom(24)
+server.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -47,6 +49,25 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database with the Flask server
 init_db(server)
+
+REDISCLOUD_URL = os.getenv('REDISCLOUD_URL', None)
+
+if REDISCLOUD_URL:
+    # Production: Use Redis for sessions
+    server.config['SESSION_TYPE'] = 'redis'
+    server.config['SESSION_REDIS'] = redis.from_url(REDISCLOUD_URL)
+else:
+    # Development: Use filesystem for sessions
+    server.config['SESSION_TYPE'] = 'filesystem'
+    server.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'flask_session_files')
+    os.makedirs(server.config['SESSION_FILE_DIR'], exist_ok=True)
+
+server.config['SESSION_PERMANENT'] = False
+server.config['SESSION_USE_SIGNER'] = True
+server.config['SESSION_KEY_PREFIX'] = 'session:'
+
+# Initialize Flask-Session before usage
+Session(server)
 
 app = Dash(
     __name__,
