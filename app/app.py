@@ -57,7 +57,7 @@ REDISCLOUD_URL = os.getenv('REDISCLOUD_URL', None)
 if REDISCLOUD_URL:
     # Production: Use Redis for sessions
     server.config['SESSION_TYPE'] = 'redis'
-    server.config['SESSION_REDIS'] = redis.from_url(REDISCLOUD_URL)
+    server.config['SESSION_REDIS'] = redis.from_url(REDISCLOUD_URL, decode_responses=True)
 else:
     # Development: Use filesystem for sessions
     server.config['SESSION_TYPE'] = 'filesystem'
