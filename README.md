@@ -1,7 +1,95 @@
 # Energy Usage Dashboard
-https://tinyurl.com/22xkubs4
 
 A web-based dashboard for visualizing and analyzing energy usage data. This application allows users to upload energy data files, view data in various formats (table, line graph, heatmap), and perform statistical analysis.
+
+## Prerequisites
+This guide will help you set up and run the Energy Usage Dashboard on your local machine. Before starting, ensure you have the following installed:
+
+
+**Python**: Download and install Python from python.org. Make sure to add Python to your system PATH during installation.
+
+To verify, run:
+```bash
+python --version
+```
+
+**Git**: Download and install Git from git-scm.com. This is required to clone the repository.
+
+To verify, run:
+```bash
+git --version
+```
+## Installation Guide
+
+**1. Clone the repository:**
+   
+This step downloads the project files to your computer.
+
+Alternative: You can also download the repository as a ZIP file from GitHub and extract it
+   ```bash
+   git clone https://github.com/Matty8409/energy-usage-dashboard
+   cd energy-usage-dashboard
+   ```
+If system can not find energy-usage-dashboard use full path ie C:\Users\Sam\Desktop\Python DEV\energy-usage-dashboard
+
+**2. Create a virtual environment:**
+   
+A virtual environment isolates the project dependencies from your system Python installation.
+
+Alternative: You can use tools like conda or pipenv instead of venv.
+   ```bash
+   python -m venv venv
+   ```
+
+**3. Activate the virtual environment**
+   
+On windows
+   ```bash
+   venv/bin/activate
+   ```
+On mac
+   ```bash
+   source venv\Scripts\activate
+   ```
+4. Install dependencies:
+
+This step installs all the required Python libraries listed in the requirements.txt file.
+
+Alternative: If you encounter issues, try installing dependencies manually through IDE.
+
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+
+5. Run the application:
+
+This command starts the Flask server and Dash application.
+
+Alternative: You can use an IDE like PyCharm to run the run.py file directly.
+
+   ```bash
+   python run.py
+   ```
+
+6. Access the app in your browser at `http://127.0.0.1:8050`.
+
+### Heroku Deployment
+
+The application is deployed on Heroku and can be accessed at:
+
+https://tinyurl.com/22xkubs4
+
+#### Important Notes:
+-It is recommended to run the application on your local system for better performance and full functionality.
+
+-Some features may be limited on Heroku due to incomplete database integration.
+
+-The app runs slower on Heroku due to the limitations of the free (Eco) plan.
+
+-This deployment is temporary and may not remain available indefinitely.
+
 
 ## Features
 
@@ -22,39 +110,6 @@ A web-based dashboard for visualizing and analyzing energy usage data. This appl
 - **Database**: SQLAlchemy (SQLite/PostgreSQL)
 - **Data Processing**: Pandas
 - **Visualization**: Plotly
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Matty8409/energy-usage-dashboard
-   cd energy-usage-dashboard
-    ```
-
-2. Create a virtual environment and activate it:
-   ```bash
-   python -m venv venv
-   source venv\Scripts\activate  # On mac: venv/bin/activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Set up the database:
-   ```bash
-   flask db init
-   flask db migrate
-   flask db upgrade
-   ```
-
-5. Run the application:
-   ```bash
-   python run.py
-   ```
-
-6. Access the app in your browser at `http://127.0.0.1:8050`.
 
 ## Usage
 
