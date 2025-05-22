@@ -14,3 +14,10 @@ class SavedCollection(db.Model):
     input = db.Column(db.String(255), nullable=True)
     datetime = db.Column(db.String(255), nullable=False)
     values = db.Column(db.JSON, nullable=False)  # Store the data as JSON
+
+class UploadedData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.Time, nullable=True)
+    energy_type = db.Column(db.String(255), nullable=False)
+    usage = db.Column(db.Float, nullable=False)

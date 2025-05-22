@@ -1,5 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
+from app.costs_and_carbon import get_conversion_factors_info
 from app.layouts.navigation_bar import get_navigation_bar
 
 def get_costs_and_carbon_layout(data):
@@ -58,5 +59,6 @@ def get_costs_and_carbon_layout(data):
                 width=6
             )
         ]),
+        get_conversion_factors_info(),
         get_navigation_bar('/costs-and-carbon')  # Add navigation bar
     ])

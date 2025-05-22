@@ -195,3 +195,15 @@ def register_costs_and_carbon_callbacks(app):
         except Exception as e:
             logging.error(f"Error updating carbon summary: {e}")
             return "An error occurred while calculating the summary."
+
+def get_conversion_factors_info():
+    # Generate a list of conversion factor details
+    conversion_info = [
+        html.Li(
+            f"{key}: Cost per unit = £{value['cost_per_unit']}, Carbon per unit = {value['carbon_per_unit']} kgCO2")
+        for key, value in conversion_factors.items()
+    ]
+    return html.Div([
+        html.H5("Conversion Factors", className="mt-4"),
+        html.Ul(conversion_info, className="text-muted")
+    ])

@@ -8,7 +8,7 @@ def get_statistics_layout(data):
         dcc.Dropdown(
             id='statistics-energy-type-dropdown',
             options=energy_meter_options,  # Dynamically use options from config
-            value=energy_meter_options[0]['value'] if energy_meter_options else None,
+            value=energy_meter_options[1]['value'] if energy_meter_options else None,
             placeholder='Select Energy Type',
             className='statistics-energy-type-dropdown'
         ),
