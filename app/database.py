@@ -8,10 +8,9 @@ db = SQLAlchemy()
 def init_db(app):
     db.init_app(app)
     with app.app_context():
-        # Import your User model here to avoid circular import issues
-        from app.models import User, SavedCollection  # Assuming Base is included in User model
+        from app.models import User, SavedCollection
 
-        db.create_all()  # This should be enough to create tables for defined models
+        db.create_all()
 
         # Add a default test user if it doesn't already exist
         if not User.query.filter_by(username="testuser").first():

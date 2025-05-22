@@ -19,8 +19,8 @@ energy_type_mapping = {
     'all': 'All Energy Types'
 }
 conversion_factors = {
-    'Electricity kWh': {'cost_per_unit': 0.4703, 'carbon_per_unit': 0.2254},  # £0.2/kWh, 0.193 kgCO2/kWh
-    'Gas m³': {'cost_per_unit': 0.0989, 'carbon_per_unit': 0.129},        # £0.05/m³, 0.184 kgCO2/m³
-    'Water 1 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.344},    # £0.002/m³, 0.344 kgCO2/m³
-    'Water 2 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.3389},    # £0.002/m³, 0.344 kgCO2/m³
+    'Electricity kWh': {'cost_per_unit': 0.4703, 'carbon_per_unit': 0.2254},
+    'Gas m³': {'cost_per_unit': 0.0989, 'carbon_per_unit': 0.129},
+    'Water 1 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.344},
+    'Water 2 m³': {'cost_per_unit': 3.60, 'carbon_per_unit': 0.3389},
 }

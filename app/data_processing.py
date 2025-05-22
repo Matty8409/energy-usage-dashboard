@@ -118,9 +118,6 @@ def get_processed_data():
     return df
 
 def convert_gas_to_kwh(df):
-    """
-    Converts gas readings from m³ to kWh in the provided DataFrame.
-    """
     gas_column = next((col for col, energy_type in energy_type_mapping.items() if energy_type == 'Gas'), None)
     if gas_column and gas_column in df.columns:
         gas_conversion_factor = 11.2  # Example: 1 m³ of gas = 11.2 kWh

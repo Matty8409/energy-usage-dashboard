@@ -21,7 +21,6 @@ from app.layouts.costs_and_carbon_layout import get_costs_and_carbon_layout
 from app.login import register_auth_callbacks, register_login_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
-from app import routes
 from app.costs_and_carbon import register_costs_and_carbon_callbacks
 
 # Create a Flask server instance
@@ -114,8 +113,6 @@ def display_page(pathname):
         return get_save_data_collection_layout(initial_df, app)
     elif pathname == '/login':
         return get_login_layout()
-    elif pathname == '/register':
-        return get_register_layout()
     elif pathname == '/statistics':
         return get_statistics_layout(initial_df)
     elif pathname == '/costs-and-carbon':
@@ -258,69 +255,42 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
 
 
     elif view_type == 'graph':
-
         try:
-
             df_melted = df_filtered.melt(
-
                 id_vars=['Time', 'Date'],
-
                 value_vars=(
-
                     [selected_energy_type]
-
                     if selected_energy_type != 'all'
-
                     else df_filtered.columns.difference(['Date', 'Time'])
-
                 ),
-
                 var_name='Energy Type',
-
                 value_name='Usage'
-
             )
 
             # Build basic figure
-
             fig = px.line(
-
                 df_melted,
-
                 x='Time',
-
                 y='Usage',
-
                 color='Energy Type',
-
                 title=(
-
                     f'Energy Usage on {selected_date}'
-
                     if selected_date not in ['all', 'average']
-
                     else 'Energy Usage Over Time'
-
                 ),
-
                 labels={'Time': 'Time of Day', 'Usage': 'Energy Usage'}
-
             )
 
-            # Update layout
             energy_label_map = {opt['value']: opt['label'] for opt in energy_meter_options}
-            # 1) Update the y-axis title to the selected type’s pretty name
 
             if selected_energy_type != 'all':
                 pretty = energy_label_map.get(selected_energy_type, 'Usage')
                 fig.update_yaxes(title_text=pretty)
 
-            # 2) Remap each legend entry to its pretty name
 
             for trace in fig.data:
-                raw_name = trace.name  # e.g. 'TH-E-01 kWh (kWh) [DELTA] 1'
+                raw_name = trace.name
                 trace.name = energy_label_map.get(raw_name, raw_name)
-
 
             return dcc.Graph(figure=fig), date_options, selected_date, selected_energy_type
 
@@ -330,16 +300,18 @@ def update_combined(view_type, selected_energy_type, selected_date, data):
             logging.error(f"Error creating graph view: {e}")
 
             return dash.no_update, date_options, selected_date, dash.no_update
+    return None
+
 
 @app.callback(
     [Output('toolbar-collapse', 'is_open'),
-     Output('toolbar-toggle-button', 'children')],  # Update button text
+     Output('toolbar-toggle-button', 'children')],
     [Input('toolbar-toggle-button', 'n_clicks')],
     [State('toolbar-collapse', 'is_open')]
 )
 def toggle_toolbar(n_clicks, is_open):
     if n_clicks:
-        is_open = not is_open  # Toggle the state
+        is_open = not is_open
     else:
         is_open = is_open  # Keep the current state if no clicks
 

@@ -4,11 +4,11 @@ from dash import no_update
 
 def register_login_callbacks(app, get_dashboard_layout, data):
     @app.callback(
-        [Output('theme-wrapper', 'children'),  # Update the page content
-         Output('url', 'pathname')],          # Update the URL
-        [Input('login-button', 'n_clicks')],  # Input for login button clicks
-        [State('username', 'value'),          # State for username input
-         State('password', 'value')]          # State for password input
+        [Output('theme-wrapper', 'children'),
+         Output('url', 'pathname')],
+        [Input('login-button', 'n_clicks')],
+        [State('username', 'value'),
+         State('password', 'value')]
     )
     def update_page_content(n_clicks, username, password):
         if n_clicks:
@@ -69,24 +69,4 @@ def register_auth_callbacks(app, get_dashboard_layout, data):
                     get_login_layout(),
                     html.Div(response['error'], style={'color': 'red'})
                 ])
-
-        if triggered == 'register-button':
-            if not reg_username or not reg_password:
-                return html.Div([
-                    get_register_layout(),
-                    html.Div("Username and password are required.", style={'color': 'red'})
-                ])
-            response, status_code = register_user(reg_username, reg_password)
-            if status_code == 201:
-                session['registered'] = True
-                return html.Div([
-                    get_login_layout(),
-                    html.Div("Registration successful. Please log in.", style={'color': 'green'})
-                ])
-            else:
-                return html.Div([
-                    get_register_layout(),
-                    html.Div(response.get('error', 'Registration failed.'), style={'color': 'red'})
-                ])
-
         return dash.no_update

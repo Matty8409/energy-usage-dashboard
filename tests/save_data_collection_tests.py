@@ -102,7 +102,6 @@ def test_save_data_invalid_columns(client):
         ],
         'state': []  # If required, include a state field
     })
-
     assert response.status_code == 200
     response_data = response.get_json()
     assert response_data['response']['saved-data-store.data'] == saved_data

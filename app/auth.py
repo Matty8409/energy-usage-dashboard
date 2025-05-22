@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.database import db
 from app.models import User
 
-
 # Login a user
 def login_user(username, password):
     user = User.query.filter_by(username=username).first()
@@ -18,6 +17,3 @@ def login_user(username, password):
 def logout_user():
     session.pop('user_id', None)
     return {'message': 'Logout successful'}, 200
-
-
-
