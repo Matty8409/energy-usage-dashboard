@@ -50,11 +50,12 @@ Alternative: You can use tools like conda or pipenv instead of venv.
    
 On windows
    ```bash
-   venv/bin/activate
+   venv\Scripts\activate
    ```
+If it doesnt work try following activate with .ps1 or .bat
 On mac
    ```bash
-   source venv\Scripts\activate
+   source venv/bin/activate
    ```
 4. Install dependencies:
 
