@@ -31,6 +31,8 @@ def register_save_data_callbacks(app):
                 return saved_data, "No data available to save.", saved_data
 
             try:
+                if isinstance(selected_energy_types, str):
+                    selected_energy_types = [selected_energy_types]
                 # Handle "all" selection
                 if "all" in selected_energy_types:
                     selected_energy_types = [col for col in data[0].keys() if col not in ['Date', 'Time']]
