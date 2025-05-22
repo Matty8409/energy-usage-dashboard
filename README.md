@@ -2,6 +2,11 @@
 
 A web-based dashboard for visualizing and analyzing energy usage data. This application allows users to upload energy data files, view data in various formats (table, line graph, heatmap), and perform statistical analysis.
 
+
+## **Note:** To access the dashboard, use the test credentials:
+- **Username:** `testuser`
+- **Password:** `testpassword`
+
 ## Prerequisites
 This guide will help you set up and run the Energy Usage Dashboard on your local machine. Before starting, ensure you have the following installed:
 
