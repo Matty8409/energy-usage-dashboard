@@ -53,6 +53,7 @@ On windows
    venv\Scripts\activate
    ```
 If it doesnt work try following activate with .ps1 or .bat
+
 On mac
    ```bash
    source venv/bin/activate
