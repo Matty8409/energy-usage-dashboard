@@ -100,7 +100,7 @@ https://tinyurl.com/22xkubs4
 
 ## Features
 
-- **User Authentication**: Login and registration functionality.
+- **User Authentication**: Login functionality.
 - **Data Upload**: Upload CSV or ZIP files containing energy usage data.
 - **Data Visualization**:
   - Table view
@@ -120,7 +120,7 @@ https://tinyurl.com/22xkubs4
 
 ## Usage
 
-1. **Login/Register**: Create an account or log in to access the dashboard.
+1. **Login**: log in to access the dashboard.
 2. **Upload Data**: Use the "Upload File or ZIP Folder" button to upload energy data files.
 3. **View Data**: Switch between table, line graph, and heatmap views using the radio buttons.
 4. **Filter Data**: Use the dropdowns to filter by date or energy type.
