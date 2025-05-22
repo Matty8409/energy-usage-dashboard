@@ -7,11 +7,8 @@ def get_login_layout():
         dbc.Input(id='username', type='text', placeholder='Enter Username', className='mb-3 login-input'),
         dbc.Input(id='password', type='password', placeholder='Enter Password', className='mb-3 login-input'),
         html.Div([
-            dbc.Button('Login', id='login-button', color='primary', className='btn-primary login-button'),
-            dbc.Button('Go to Register', id='go-to-register', color='primary', className='btn-primary login-button')
+            dbc.Button('Login', id='login-button', color='primary', className='btn-primary login-button')
         ], className='login-button-group'),
-        dcc.Input(id='register-username', style={'display': 'none'}),
-        dcc.Input(id='register-password', style={'display': 'none'}),
         html.Div(id='login-message', className='text-danger mt-3')
     ], id='theme-wrapper', className='p-4')
     return login_layout

@@ -14,13 +14,11 @@ from app.data_processing import process_uploaded_file, load_initial_csv_data, ap
 from app.database import init_db
 from app.layouts.dashboard_layout import get_dashboard_layout
 from app.layouts.login_layout import get_login_layout
-from app.layouts.register_layout import get_register_layout
 from app.layouts.statistics_layout import get_statistics_layout
 from app.layouts.save_data_collection_layout import get_save_data_collection_layout
 from app.data_processing import load_initial_csv_data
 from app.layouts.costs_and_carbon_layout import get_costs_and_carbon_layout
 from app.login import register_auth_callbacks, register_login_callbacks
-from app.register import register_register_callbacks
 from app.save_data_collection import register_save_data_callbacks
 from app.statistics import register_statistics_callbacks
 from app import routes
@@ -28,8 +26,6 @@ from app.costs_and_carbon import register_costs_and_carbon_callbacks
 
 # Create a Flask server instance
 server = Flask(__name__)
-
-routes.register_routes()
 
 server.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
@@ -72,7 +68,6 @@ app.validation_layout = html.Div([  # Ensure that 'url' is part of the validatio
     dcc.Store(id='data-store', data=initial_df.to_dict('records')),
     get_login_layout(),
     get_dashboard_layout(initial_df),
-    get_register_layout(),
     get_statistics_layout(initial_df),
     get_save_data_collection_layout(initial_df, app),
     get_costs_and_carbon_layout(initial_df)

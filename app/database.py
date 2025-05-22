@@ -21,3 +21,4 @@ def init_db(app):
             )
             db.session.add(test_user)
             db.session.commit()
+

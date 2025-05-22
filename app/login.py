@@ -6,32 +6,25 @@ def register_login_callbacks(app, get_dashboard_layout, data):
     @app.callback(
         [Output('theme-wrapper', 'children'),  # Update the page content
          Output('url', 'pathname')],          # Update the URL
-        [Input('login-button', 'n_clicks'),
-         Input('go-to-register', 'n_clicks')],
-        [State('username', 'value'), State('password', 'value')]
+        [Input('login-button', 'n_clicks')],  # Input for login button clicks
+        [State('username', 'value'),          # State for username input
+         State('password', 'value')]          # State for password input
     )
-    def update_page_content(n_clicks, n_register_clicks, username, password):
-        if n_register_clicks:
-            return get_register_layout(), '/register'  # Redirect to register page
-
+    def update_page_content(n_clicks, username, password):
         if n_clicks:
             response, status_code = login_user(username, password)
             if status_code == 200:  # Login successful
                 session['logged_in'] = True
-                return get_dashboard_layout(data), '/dashboard'  # Redirect to dashboard
+                return get_dashboard_layout(data), '/dashboard'
             else:  # Login failed
-                return html.Div([
-                    get_login_layout(),
-                    html.Div(response['error'], style={'color': 'red', 'marginTop': '10px'})
-                ]), no_update  # Keep the current URL
+                return html.Div("Invalid username or password.", style={'color': 'red'}), no_update
 
         return get_login_layout(), no_update  # Default to login layout
 
 import dash
 from dash import Input, Output, State, html
 from flask import session
-from app.auth import login_user, register_user
-from app.layouts.register_layout import get_register_layout
+from app.auth import login_user
 from app.layouts.login_layout import get_login_layout
 
 def register_auth_callbacks(app, get_dashboard_layout, data):
@@ -57,9 +50,6 @@ def register_auth_callbacks(app, get_dashboard_layout, data):
         reg_username, reg_password
     ):
         triggered = dash.callback_context.triggered_id
-
-        if triggered == 'go-to-register':
-            return get_register_layout()
 
         if triggered == 'go-to-login':
             return get_login_layout()
